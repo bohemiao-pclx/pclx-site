@@ -11,6 +11,7 @@ const toast = $('toast')
 let state = { tab: 'all', category: 'all', query: '', posts: [], active: null }
 let auth = loadAuth()
 let authMode = 'login'
+let pendingAttachment = null
 
 function loadAuth() {
   try {
@@ -148,6 +149,60 @@ $('authForm').addEventListener('submit', async (event) => {
   } catch (error) { showToast(error.message) }
 })
 
+function fileType(file) {
+  if (file.type.startsWith('image/')) return 'image'
+  if (file.type.startsWith('video/')) return 'video'
+  return 'file'
+}
+
+async function uploadAttachment(file) {
+  if (!file) return
+  if (file.size > 100 * 1024 * 1024) {
+    setFileStatus('文件超过 100 MB，请选择更小的文件', true)
+    return
+  }
+  pendingAttachment = null
+  const status = $('fileStatus')
+  status.hidden = false
+  status.className = 'file-status'
+  status.innerHTML = '<span>正在上传 ' + escapeHtml(file.name) + ' …</span>'
+  const form = new FormData()
+  form.append('file', file, file.name)
+  try {
+    const response = await fetch('https://kappa.lol/api/upload', { method: 'POST', body: form })
+    const data = await response.json()
+    if (!response.ok || !data.link) throw new Error(data.message || '上传失败')
+    pendingAttachment = { url: data.link, type: fileType(file), name: file.name }
+    status.className = 'file-status'
+    status.innerHTML = '<span>✓ ' + escapeHtml(file.name) + ' 已上传</span><button type="button" id="clearFile">×</button>'
+    $('clearFile')?.addEventListener('click', () => {
+      pendingAttachment = null
+      status.hidden = true
+      $('newFile').value = ''
+    })
+  } catch (error) {
+    setFileStatus('上传失败：' + error.message, true)
+  }
+}
+
+function setFileStatus(message, error = false) {
+  const status = $('fileStatus')
+  status.hidden = false
+  status.className = 'file-status' + (error ? ' error' : '')
+  status.textContent = message
+}
+
+$('newFile').addEventListener('change', () => { void uploadAttachment($('newFile').files[0]) })
+const drop = $('fileDrop')
+drop.addEventListener('dragover', (event) => { event.preventDefault(); drop.classList.add('dragging') })
+drop.addEventListener('dragleave', () => drop.classList.remove('dragging'))
+drop.addEventListener('drop', (event) => {
+  event.preventDefault()
+  drop.classList.remove('dragging')
+  const file = event.dataTransfer?.files?.[0]
+  if (file) void uploadAttachment(file)
+})
+
 $('newPostButton').addEventListener('click', () => {
   if (!auth) { showToast('请先登录论坛'); openModal('authModal'); return }
   openModal('newModal')
@@ -156,15 +211,19 @@ $('newPostButton').addEventListener('click', () => {
 $('newForm').addEventListener('submit', async (event) => {
   event.preventDefault()
   if (!auth) return
-  const attachment = $('newAttachment').value.trim()
-  const type = !attachment ? null : /\.(png|jpe?g|webp|gif|bmp|avif)(\?|$)/i.test(attachment) ? 'image' : /\.(mp4|webm|mov|m4v|ogv)(\?|$)/i.test(attachment) ? 'video' : 'file'
+  const pasted = $('newAttachment').value.trim()
+  const attachmentUrl = pendingAttachment?.url || pasted || null
+  const attachmentType = pendingAttachment?.type || (!pasted ? null : /\.(png|jpe?g|webp|gif|bmp|avif)(\?|$)/i.test(pasted) ? 'image' : /\.(mp4|webm|mov|m4v|ogv)(\?|$)/i.test(pasted) ? 'video' : 'file')
+  const attachmentName = pendingAttachment?.name || (pasted ? decodeURIComponent(pasted.split('/').pop().split('?')[0]) : null)
   try {
     await api('/api/posts', {
       method: 'POST', token: auth.token,
-      body: { title: $('newTitle').value.trim(), content: $('newContent').value.trim(), category: $('newCategory').value, attachmentUrl: attachment || null, attachmentType: type, attachmentName: attachment ? decodeURIComponent(attachment.split('/').pop().split('?')[0]) : null }
+      body: { title: $('newTitle').value.trim(), content: $('newContent').value.trim(), category: $('newCategory').value, attachmentUrl, attachmentType, attachmentName }
     })
     closeModal('newModal')
     $('newForm').reset()
+    pendingAttachment = null
+    $('fileStatus').hidden = true
     showToast('帖子已发布')
     void loadPosts()
   } catch (error) { showToast(error.message) }
