@@ -56,8 +56,10 @@ let categories = []
 function renderCategoryOptions() {
   const all = [{ key: 'all', label: '全部' }, ...categories]
   categoriesEl.innerHTML = all.map((item) => `<button type="button" class="${state.category === item.key ? 'active' : ''}" data-cat="${escapeHtml(item.key)}">${escapeHtml(item.label)}</button>`).join('')
-  const select = $('newCategory')
-  if (select) select.innerHTML = categories.map((item) => `<option value="${escapeHtml(item.key)}">${escapeHtml(item.label)}</option>`).join('')
+  for (const id of ['newCategory', 'editCategory']) {
+    const select = $(id)
+    if (select) select.innerHTML = categories.map((item) => `<option value="${escapeHtml(item.key)}">${escapeHtml(item.label)}</option>`).join('')
+  }
 }
 
 async function loadCategories() {
@@ -108,7 +110,7 @@ async function loadPosts() {
       <article class="web-post" data-id="${post.id}">
         <div class="web-post-meta">
           ${post.announcement ? '<span class="web-badge announcement">官方通告</span>' : ''}
-          ${post.featured ? '<span class="web-badge featured">精华</span>' : ''}
+          ${post.pinned ? '<span class="web-badge pinned">置顶</span>' : ''}${post.pinned ? '<span class="web-badge pinned">置顶</span>' : ''}${post.featured ? '<span class="web-badge featured">精华</span>' : ''}
           <span class="web-badge category">${escapeHtml(categoryLabels[post.category] || post.category)}</span>
           <button class="author-link" data-profile-id="${post.author.id}">${escapeHtml(post.author.username)}</button><span>${timeAgo(post.createdAt)}</span>
         </div>
@@ -315,6 +317,37 @@ async function openDetail(id) {
   } catch (error) { showToast(error.message) }
 }
 
+function openEdit(post) {
+  if (!auth || (auth.user.id !== post.author.id && auth.user.role !== 'admin')) return
+  $('editTitle').value = post.title
+  $('editContent').value = post.content
+  $('editCategory').value = post.category
+  openModal('editModal')
+}
+
+$('editForm').addEventListener('submit', async (event) => {
+  event.preventDefault()
+  if (!auth || !state.active) return
+  const post = state.active.post
+  try {
+    await api(`/api/posts/${post.id}`, {
+      method: 'PUT', token: auth.token,
+      body: {
+        title: $('editTitle').value.trim(),
+        content: $('editContent').value.trim(),
+        category: $('editCategory').value,
+        attachmentUrl: post.attachmentUrl || null,
+        attachmentType: post.attachmentType || null,
+        attachmentName: post.attachmentName || null
+      }
+    })
+    closeModal('editModal')
+    await openDetail(post.id)
+    void loadPosts()
+    showToast('帖子已更新')
+  } catch (error) { showToast(error.message) }
+})
+
 function renderDetail() {
   const { post, comments } = state.active
   const attachment = post.attachmentUrl
@@ -328,7 +361,7 @@ function renderDetail() {
   $('postDetail').innerHTML = `
     <div class="web-post-meta">
       ${post.announcement ? '<span class="web-badge announcement">官方通告</span>' : ''}
-      ${post.featured ? '<span class="web-badge featured">精华</span>' : ''}
+      ${post.pinned ? '<span class="web-badge pinned">置顶</span>' : ''}${post.pinned ? '<span class="web-badge pinned">置顶</span>' : ''}${post.featured ? '<span class="web-badge featured">精华</span>' : ''}
       <span class="web-badge category">${escapeHtml(categoryLabels[post.category] || post.category)}</span>
       <button class="author-link" data-profile-id="${post.author.id}">${escapeHtml(post.author.username)}</button><span>${timeAgo(post.createdAt)}</span>
     </div>
@@ -338,7 +371,7 @@ function renderDetail() {
     <div class="detail-actions">
       <button class="like-button ${post.liked ? 'active' : ''}" id="likePost">♥ ${post.likeCount}</button>
       <span>${comments.length} 条评论</span>
-      ${admin ? `<span class="admin-flags"><button id="flagFeatured">${post.featured ? '取消精华' : '设为精华'}</button><button id="flagAnnouncement">${post.announcement ? '取消通告' : '设为通告'}</button></span>` : ''}
+      ${admin ? `<span class="admin-flags"><button id="flagPinned">${post.pinned ? '取消置顶' : '置顶'}</button><button id="flagFeatured">${post.featured ? '取消精华' : '设为精华'}</button><button id="flagAnnouncement">${post.announcement ? '取消通告' : '设为通告'}</button></span>` : ''}${(auth && (auth.user.id === post.author.id || admin)) ? '<button class="text-button" id="editPost">编辑帖子</button>' : ''}
     </div>
     <div class="detail-comments">${comments.map((item) => `<div class="web-comment"><b>${escapeHtml(item.author.username)}</b><span>${timeAgo(item.createdAt)}</span><div class="web-comment-body md-content">${renderMarkdown(item.content)}</div></div>`).join('') || '<div class="web-empty">还没有评论。</div>'}</div>
     <form class="comment-form" id="commentForm"><input id="commentInput" placeholder="${auth ? '写下评论…' : '登录后发表评论'}" maxlength="5000" /><button class="solid-button" type="submit">发送</button></form>
@@ -353,8 +386,10 @@ function renderDetail() {
       void loadPosts()
     } catch (error) { showToast(error.message) }
   })
+  $('flagPinned')?.addEventListener('click', () => toggleFlag('pinned'))
   $('flagFeatured')?.addEventListener('click', () => toggleFlag('featured'))
   $('flagAnnouncement')?.addEventListener('click', () => toggleFlag('announcement'))
+  $('editPost')?.addEventListener('click', () => openEdit(post))
   $('commentForm')?.addEventListener('submit', async (event) => {
     event.preventDefault()
     if (!auth) { showToast('请先登录'); openModal('authModal'); return }
