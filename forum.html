@@ -116,6 +116,19 @@
       </div>
     </div>
 
+    <div class="modal-backdrop" id="editModal" hidden>
+      <div class="web-modal wide">
+        <button class="modal-x" data-close="editModal">×</button>
+        <h2>编辑帖子</h2>
+        <form id="editForm">
+          <label>标题<input id="editTitle" required maxlength="100" /></label>
+          <label>分类<select id="editCategory"></select></label>
+          <label>正文<textarea id="editContent" rows="8" required maxlength="20000"></textarea></label>
+          <div class="web-form-actions"><span class="web-modal-sub">编辑后保留发布时间</span><button class="solid-button" type="submit">保存</button></div>
+        </form>
+      </div>
+    </div>
+
     <div class="modal-backdrop" id="categoryModal" hidden>
       <div class="web-modal">
         <button class="modal-x" data-close="categoryModal">×</button>
