@@ -94,7 +94,7 @@ async function loadPosts() {
           <span>${escapeHtml(post.author.username)}</span><span>${timeAgo(post.createdAt)}</span>
         </div>
         <h2>${escapeHtml(post.title)}</h2>
-        <p>${escapeHtml(String(post.content || '').slice(0, 190))}${String(post.content || '').length > 190 ? '…' : ''}</p>
+        <p>${escapeHtml(markdownToPlain(String(post.content || '')).slice(0, 190))}${markdownToPlain(String(post.content || '')).length > 190 ? '…' : ''}</p>
         <div class="web-post-foot"><span>♥ ${post.likeCount}</span><span>💬 ${post.commentCount}</span><span class="open">查看讨论 →</span></div>
       </article>
     `).join('')
@@ -261,14 +261,14 @@ function renderDetail() {
       <span>${escapeHtml(post.author.username)}</span><span>${timeAgo(post.createdAt)}</span>
     </div>
     <h2 class="detail-title">${escapeHtml(post.title)}</h2>
-    <div class="detail-content">${escapeHtml(post.content)}</div>
+    <div class="detail-content md-content">${renderMarkdown(post.content)}</div>
     ${attachment}
     <div class="detail-actions">
       <button class="like-button ${post.liked ? 'active' : ''}" id="likePost">♥ ${post.likeCount}</button>
       <span>${comments.length} 条评论</span>
       ${admin ? `<span class="admin-flags"><button id="flagFeatured">${post.featured ? '取消精华' : '设为精华'}</button><button id="flagAnnouncement">${post.announcement ? '取消通告' : '设为通告'}</button></span>` : ''}
     </div>
-    <div class="detail-comments">${comments.map((item) => `<div class="web-comment"><b>${escapeHtml(item.author.username)}</b><span>${timeAgo(item.createdAt)}</span><p>${escapeHtml(item.content)}</p></div>`).join('') || '<div class="web-empty">还没有评论。</div>'}</div>
+    <div class="detail-comments">${comments.map((item) => `<div class="web-comment"><b>${escapeHtml(item.author.username)}</b><span>${timeAgo(item.createdAt)}</span><div class="web-comment-body md-content">${renderMarkdown(item.content)}</div></div>`).join('') || '<div class="web-empty">还没有评论。</div>'}</div>
     <form class="comment-form" id="commentForm"><input id="commentInput" placeholder="${auth ? '写下评论…' : '登录后发表评论'}" maxlength="5000" /><button class="solid-button" type="submit">发送</button></form>
   `
   $('likePost')?.addEventListener('click', async () => {
