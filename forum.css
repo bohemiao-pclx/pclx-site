@@ -81,3 +81,16 @@
   .forum-main { width: calc(100% - 28px); padding-top: 96px; }
   .forum-footer { width: calc(100% - 28px); flex-direction: column; gap: 8px; }
 }
+
+
+/* 网页论坛：直接上传附件到免费文件托管 */
+.file-upload-field { display: flex; flex-direction: column; gap: 6px; }
+.file-upload-field > span { color: var(--ink-soft); font-size: 10px; }
+.file-drop { display: flex; flex-direction: column; gap: 3px; align-items: center; justify-content: center; padding: 18px 12px; border: 1px dashed rgba(20,33,27,.28); border-radius: 9px; background: var(--paper); color: var(--ink-soft); cursor: pointer; text-align: center; transition: border-color .18s ease, background .18s ease; }
+.file-drop:hover, .file-drop.dragging { border-color: var(--blue); background: rgba(65,105,255,.04); }
+.file-drop input { display: none; }
+.file-drop b { color: var(--ink); font-size: 11px; }
+.file-drop small { color: var(--muted); font-size: 9px; }
+.file-status { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 9px; border-radius: 7px; background: rgba(191,233,74,.18); color: #526b00; font-size: 10px; }
+.file-status.error { background: rgba(220,38,38,.08); color: #b91c1c; }
+.file-status button { border: 0; background: transparent; color: inherit; cursor: pointer; font-size: 13px; }
