@@ -19,6 +19,7 @@
       <div class="forum-nav-actions">
         <a class="nav-github" href="index.html">返回官网</a>
         <span class="forum-auth-name" id="authName"></span>
+        <button class="mini-button" id="profileButton" type="button" hidden>我的</button>
         <button class="mini-button" id="authButton" type="button">登录 / 注册</button>
         <button class="mini-button dark" id="newPostButton" type="button">发帖</button>
       </div>
@@ -111,6 +112,13 @@
           </div>
           <div class="web-form-actions"><span></span><button class="solid-button" type="submit" id="publishButton">发布</button></div>
         </form>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="profileModal" hidden>
+      <div class="web-modal wide">
+        <button class="modal-x" data-close="profileModal">×</button>
+        <div id="profileContent"></div>
       </div>
     </div>
 
