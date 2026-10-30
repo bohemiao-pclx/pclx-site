@@ -98,6 +98,7 @@ async function loadPosts() {
     if (state.query) params.set('q', state.query)
     if (state.tab === 'featured') params.set('featured', '1')
     if (state.tab === 'announcements') params.set('announcements', '1')
+    if (state.tab === 'following') params.set('following', '1')
     const result = await api(`/api/posts?${params}`)
     state.posts = result.posts || []
     statusEl.hidden = state.posts.length > 0
@@ -221,12 +222,22 @@ async function openProfile(userId) {
         <div class="web-profile-head">
           <div class="web-profile-avatar">${result.user.avatarUrl ? `<img src="${escapeHtml(result.user.avatarUrl)}" alt="" />` : escapeHtml(result.user.username.slice(0, 1).toUpperCase())}</div>
           <div><h2>${escapeHtml(result.user.username)}</h2><span>${result.user.role === 'admin' ? '管理员 · ' : ''}加入于 ${new Date(result.user.createdAt).toLocaleDateString('zh-CN')}</span></div>
-          ${own ? '<label class="solid-button web-avatar-button">上传头像<input id="avatarFile" type="file" accept="image/*" hidden /></label>' : ''}
+          ${own ? '<label class="solid-button web-avatar-button">上传头像<input id="avatarFile" type="file" accept="image/*" hidden /></label>' : `<button class="solid-button web-avatar-button" id="followButton">${result.user.isFollowing ? '已关注' : '+ 关注'}</button>`}
         </div>
-        <div class="web-profile-stats"><span><b>${result.user.postCount}</b> 帖子</span><span><b>${result.user.commentCount}</b> 评论</span><span><b>${result.user.likeCount}</b> 获赞</span></div>
+        <div class="web-profile-stats"><span><b>${result.user.postCount}</b> 帖子</span><span><b>${result.user.followerCount}</b> 粉丝</span><span><b>${result.user.followingCount}</b> 关注</span><span><b>${result.user.likeCount}</b> 获赞</span></div>
         <div class="web-profile-posts"><b>最近发布</b>${result.posts.length ? result.posts.map((post) => `<div class="web-profile-post"><span>${post.announcement ? '官方通告 · ' : ''}${post.featured ? '精华 · ' : ''}${escapeHtml(post.title)}</span><small>${timeAgo(post.createdAt)}</small></div>`).join('') : '<div class="web-empty">还没有发布过帖子。</div>'}</div>
       </div>`
     $('avatarFile')?.addEventListener('change', () => { void uploadAvatar($('avatarFile').files[0]) })
+    $('followButton')?.addEventListener('click', async () => {
+      if (!auth) { openModal('authModal'); return }
+      try {
+        const following = await api(`/api/users/${result.user.id}/follow`, { method: result.user.isFollowing ? 'DELETE' : 'POST', token: auth.token })
+        result.user.isFollowing = following.following
+        result.user.followerCount = following.followerCount
+        await openProfile(result.user.id)
+        showToast(following.following ? '已关注' : '已取消关注')
+      } catch (error) { showToast(error.message) }
+    })
     openModal('profileModal')
   } catch (error) { showToast(error.message) }
 }
