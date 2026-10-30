@@ -94,3 +94,20 @@
 .file-status { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 9px; border-radius: 7px; background: rgba(191,233,74,.18); color: #526b00; font-size: 10px; }
 .file-status.error { background: rgba(220,38,38,.08); color: #b91c1c; }
 .file-status button { border: 0; background: transparent; color: inherit; cursor: pointer; font-size: 13px; }
+
+/* Markdown 内容 */
+.md-content { color: var(--ink-soft); font-size: 13px; line-height: 1.85; }
+.md-content p { margin: 0 0 8px; }
+.md-content h1, .md-content h2, .md-content h3, .md-content h4 { margin: 14px 0 7px; color: var(--ink); line-height: 1.3; letter-spacing: -.025em; }
+.md-content h1 { font-size: 23px; } .md-content h2 { font-size: 19px; } .md-content h3 { font-size: 16px; }
+.md-content strong { color: var(--ink); }
+.md-content a { color: var(--blue); text-decoration: underline; text-underline-offset: 2px; }
+.md-content code { padding: 2px 4px; border-radius: 4px; background: var(--paper-2); color: var(--ink); font-family: "Cascadia Mono", Consolas, monospace; font-size: 11px; }
+.md-content .md-code { margin: 10px 0; padding: 11px 12px; border-radius: 8px; background: var(--ink); color: #dfe9e2; overflow-x: auto; }
+.md-content .md-code code { padding: 0; background: transparent; color: inherit; font-size: 11px; white-space: pre; }
+.md-content blockquote { margin: 10px 0; padding: 7px 12px; border-left: 2px solid var(--blue); background: var(--paper); color: var(--ink-soft); }
+.md-content ul, .md-content ol { margin: 7px 0; padding-left: 21px; }
+.md-content li { margin: 3px 0; }
+.md-content hr { margin: 15px 0; border: 0; border-top: 1px solid var(--line); }
+.md-content .md-image { display: block; max-width: 100%; max-height: 360px; object-fit: contain; margin: 9px 0; border-radius: 8px; }
+.web-comment p .md-content { display: inline; }
