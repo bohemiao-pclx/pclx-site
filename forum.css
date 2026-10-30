@@ -153,3 +153,5 @@
 
 /* 登录框始终相对视口居中，不受列表滚动和页面高度影响 */
 .forum-body .modal-backdrop { position: fixed; inset: 0; width: 100vw; height: 100dvh; margin: 0; padding: 20px; }
+
+.web-badge.pinned { background: rgba(34,197,94,.10); color: #15803d; }
