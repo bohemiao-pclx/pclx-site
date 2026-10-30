@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f4f2ea" />
+    <title>PCL-X 论坛</title>
+    <link rel="icon" href="assets/icon.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="forum.css" />
+  </head>
+  <body class="forum-body">
+    <div class="grain" aria-hidden="true"></div>
+    <header class="nav forum-nav">
+      <a class="brand" href="index.html">
+        <img src="assets/icon.png" alt="" width="34" height="34" />
+        <span>PCL-X</span><em>论坛</em>
+      </a>
+      <div class="forum-nav-actions">
+        <a class="nav-github" href="index.html">返回官网</a>
+        <span class="forum-auth-name" id="authName"></span>
+        <button class="mini-button" id="authButton" type="button">登录 / 注册</button>
+        <button class="mini-button dark" id="newPostButton" type="button">发帖</button>
+      </div>
+    </header>
+
+    <main class="forum-main">
+      <section class="forum-hero">
+        <p class="eyebrow"><span class="dot"></span> PCL-X COMMUNITY</p>
+        <div class="forum-hero-row">
+          <h1>在启动器之外，<br /><span class="serif">也聊一聊。</span></h1>
+          <p>和 PCL-X 用户交流、求助、分享。论坛与启动器内社区使用同一个账户和同一套数据。</p>
+        </div>
+      </section>
+
+      <nav class="forum-web-tabs" id="tabs">
+        <button type="button" class="active" data-tab="all">全部</button>
+        <button type="button" data-tab="featured">精华</button>
+        <button type="button" data-tab="announcements">官方通告</button>
+      </nav>
+
+      <div class="forum-web-toolbar">
+        <div class="forum-web-cats" id="categories">
+          <button type="button" class="active" data-cat="all">全部</button>
+          <button type="button" data-cat="general">综合</button>
+          <button type="button" data-cat="help">求助</button>
+          <button type="button" data-cat="showcase">展示</button>
+          <button type="button" data-cat="chat">闲聊</button>
+        </div>
+        <div class="forum-web-search">
+          <span>⌕</span>
+          <input id="searchInput" placeholder="搜索帖子…" />
+          <button type="button" id="searchButton">搜索</button>
+        </div>
+      </div>
+
+      <div class="forum-web-status" id="status">正在读取帖子…</div>
+      <div class="forum-web-list" id="postList"></div>
+    </main>
+
+    <footer class="forum-footer">
+      <span>PCL-X Community</span>
+      <span><a href="index.html">官网</a> · <a href="https://github.com/QLX121210/pclx-updates" target="_blank" rel="noreferrer">GitHub</a></span>
+    </footer>
+
+    <div class="modal-backdrop" id="authModal" hidden>
+      <div class="web-modal">
+        <button class="modal-x" data-close="authModal">×</button>
+        <h2 id="authTitle">登录论坛</h2>
+        <p class="web-modal-sub">论坛账户与 Minecraft 账户独立。</p>
+        <form id="authForm">
+          <label>用户名<input id="authUser" autocomplete="username" required maxlength="20" /></label>
+          <label>密码<input id="authPass" type="password" autocomplete="current-password" required maxlength="72" /></label>
+          <div class="web-form-actions">
+            <button type="button" class="text-button" id="switchAuth">没有账户？注册</button>
+            <button class="solid-button" type="submit" id="authSubmit">登录</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="postModal" hidden>
+      <div class="web-modal wide">
+        <button class="modal-x" data-close="postModal">×</button>
+        <div id="postDetail"></div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="newModal" hidden>
+      <div class="web-modal wide">
+        <button class="modal-x" data-close="newModal">×</button>
+        <h2>发布帖子</h2>
+        <form id="newForm">
+          <label>标题<input id="newTitle" required maxlength="100" /></label>
+          <label>分类
+            <select id="newCategory">
+              <option value="general">综合</option><option value="help">求助</option>
+              <option value="showcase">展示</option><option value="chat">闲聊</option>
+            </select>
+          </label>
+          <label>正文<textarea id="newContent" rows="7" required maxlength="20000"></textarea></label>
+          <label>附件链接（可选）<input id="newAttachment" placeholder="https://… 图片 / 视频 / 文件地址" /></label>
+          <div class="web-form-actions"><span></span><button class="solid-button" type="submit">发布</button></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <script src="forum.js"></script>
+  </body>
+</html>
