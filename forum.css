@@ -1,6 +1,6 @@
 :root { --forum-bg: #f4f2ea; }
 .forum-body { background: var(--forum-bg); }
-.forum-nav { position: sticky; top: 14px; }
+.forum-nav { position: fixed; top: 18px; }
 .forum-nav-actions { display: flex; align-items: center; gap: 10px; }
 .forum-auth-name { color: var(--ink-soft); font-size: 10px; }
 .mini-button { border: 1px solid var(--line); border-radius: 9px; padding: 8px 11px; background: transparent; color: var(--ink-soft); font-size: 10px; cursor: pointer; }
