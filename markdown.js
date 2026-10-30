@@ -17,6 +17,7 @@
       .replace(/__([^_]+)__/g, '<strong>$1</strong>')
       .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>')
       .replace(/~~([^~]+)~~/g, '<del>$1</del>')
+      .replace(/@([\p{L}\p{N}_-]{2,20})/gu, '<span class="forum-mention">@$1</span>')
   }
 
   function render(source) {
