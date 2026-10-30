@@ -98,7 +98,7 @@
               <option value="showcase">展示</option><option value="chat">闲聊</option>
             </select>
           </label>
-          <label>正文<textarea id="newContent" rows="7" required maxlength="20000"></textarea></label>
+          <label>正文<textarea id="newContent" rows="7" required maxlength="20000" placeholder="写点什么…支持 Markdown：**加粗**、*斜体*、- 列表、`代码`、[链接](https://…)"></textarea></label>
           <div class="file-upload-field">
             <span>附件（可选）</span>
             <label class="file-drop" id="fileDrop">
@@ -115,6 +115,7 @@
     </div>
 
     <div class="toast" id="toast"></div>
+    <script src="markdown.js"></script>
     <script src="forum.js"></script>
   </body>
 </html>
