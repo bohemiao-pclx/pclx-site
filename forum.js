@@ -50,7 +50,24 @@ function timeAgo(value) {
   if (diff < 86400000 * 30) return `${Math.floor(diff / 86400000)} 天前`
   return new Date(value).toLocaleDateString('zh-CN')
 }
-const CATEGORY_LABEL = { general: '综合', help: '求助', showcase: '展示', chat: '闲聊' }
+let categoryLabels = {}
+let categories = []
+
+function renderCategoryOptions() {
+  const all = [{ key: 'all', label: '全部' }, ...categories]
+  categoriesEl.innerHTML = all.map((item) => `<button type="button" class="${state.category === item.key ? 'active' : ''}" data-cat="${escapeHtml(item.key)}">${escapeHtml(item.label)}</button>`).join('')
+  const select = $('newCategory')
+  if (select) select.innerHTML = categories.map((item) => `<option value="${escapeHtml(item.key)}">${escapeHtml(item.label)}</option>`).join('')
+}
+
+async function loadCategories() {
+  try {
+    const result = await api('/api/categories')
+    categories = result.categories || []
+    categoryLabels = Object.fromEntries(categories.map((item) => [item.key, item.label]))
+    renderCategoryOptions()
+  } catch { /* 保留默认分类按钮 */ }
+}
 
 function showToast(message) {
   toast.textContent = message
@@ -62,6 +79,7 @@ function renderAuth() {
   $('authName').textContent = auth ? auth.user.username : ''
   $('authButton').textContent = auth ? '退出' : '登录 / 注册'
   $('profileButton').hidden = !auth
+  $('categoryAdminButton').hidden = !auth || auth.user.role !== 'admin'
 }
 function openModal(id) { $(id).hidden = false }
 function closeModal(id) { $(id).hidden = true }
@@ -91,7 +109,7 @@ async function loadPosts() {
         <div class="web-post-meta">
           ${post.announcement ? '<span class="web-badge announcement">官方通告</span>' : ''}
           ${post.featured ? '<span class="web-badge featured">精华</span>' : ''}
-          <span class="web-badge category">${escapeHtml(CATEGORY_LABEL[post.category] || post.category)}</span>
+          <span class="web-badge category">${escapeHtml(categoryLabels[post.category] || post.category)}</span>
           <button class="author-link" data-profile-id="${post.author.id}">${escapeHtml(post.author.username)}</button><span>${timeAgo(post.createdAt)}</span>
         </div>
         <h2>${escapeHtml(post.title)}</h2>
@@ -121,6 +139,18 @@ categoriesEl.addEventListener('click', (event) => {
 $('searchButton').addEventListener('click', () => { state.query = $('searchInput').value.trim(); void loadPosts() })
 $('searchInput').addEventListener('keydown', (event) => { if (event.key === 'Enter') { state.query = $('searchInput').value.trim(); void loadPosts() } })
 
+$('categoryAdminButton').addEventListener('click', () => { if (auth?.user.role === 'admin') openModal('categoryModal') })
+$('categoryForm').addEventListener('submit', async (event) => {
+  event.preventDefault()
+  if (!auth || auth.user.role !== 'admin') return
+  try {
+    await api('/api/admin/categories', { method: 'POST', token: auth.token, body: { key: $('categoryKey').value.trim().toLowerCase(), label: $('categoryLabel').value.trim() } })
+    $('categoryForm').reset()
+    closeModal('categoryModal')
+    showToast('板块已创建')
+    await loadCategories()
+  } catch (error) { showToast(error.message) }
+})
 $('profileButton').addEventListener('click', () => { if (auth) void openProfile(auth.user.id) })
 $('authButton').addEventListener('click', () => {
   if (auth) { saveAuth(null); showToast('已退出论坛'); return }
@@ -299,7 +329,7 @@ function renderDetail() {
     <div class="web-post-meta">
       ${post.announcement ? '<span class="web-badge announcement">官方通告</span>' : ''}
       ${post.featured ? '<span class="web-badge featured">精华</span>' : ''}
-      <span class="web-badge category">${escapeHtml(CATEGORY_LABEL[post.category] || post.category)}</span>
+      <span class="web-badge category">${escapeHtml(categoryLabels[post.category] || post.category)}</span>
       <button class="author-link" data-profile-id="${post.author.id}">${escapeHtml(post.author.username)}</button><span>${timeAgo(post.createdAt)}</span>
     </div>
     <h2 class="detail-title">${escapeHtml(post.title)}</h2>
@@ -354,4 +384,5 @@ document.getElementById('postDetail')?.addEventListener('click', (event) => {
 })
 
 renderAuth()
+void loadCategories()
 void loadPosts()
