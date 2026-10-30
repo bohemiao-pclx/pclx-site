@@ -29,8 +29,9 @@ img { display: block; max-width: 100%; }
 button { font: inherit; color: inherit; }
 .serif { font-family: "Times New Roman", "Songti SC", serif; font-style: italic; font-weight: 400; }
 .grain {
-  position: fixed; inset: 0; z-index: 999; pointer-events: none; opacity: .16; mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.34'/%3E%3C/svg%3E");
+  position: fixed; inset: 0; z-index: 999; pointer-events: none; opacity: .035; mix-blend-mode: multiply;
+  background-image: radial-gradient(rgba(20, 33, 27, .75) 0.55px, transparent 0.55px);
+  background-size: 3px 3px;
 }
 
 .nav {
