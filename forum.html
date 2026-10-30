@@ -99,8 +99,17 @@
             </select>
           </label>
           <label>正文<textarea id="newContent" rows="7" required maxlength="20000"></textarea></label>
-          <label>附件链接（可选）<input id="newAttachment" placeholder="https://… 图片 / 视频 / 文件地址" /></label>
-          <div class="web-form-actions"><span></span><button class="solid-button" type="submit">发布</button></div>
+          <div class="file-upload-field">
+            <span>附件（可选）</span>
+            <label class="file-drop" id="fileDrop">
+              <input id="newFile" type="file" accept="image/*,video/*,.zip,.rar,.7z,.txt,.pdf,.jar,.json,.log" />
+              <b>选择要上传的文件</b>
+              <small>图片 / 视频 / 文件 · 自动上传到免费托管 · 最大 100 MB</small>
+            </label>
+            <div class="file-status" id="fileStatus" hidden></div>
+            <input id="newAttachment" placeholder="也可以直接粘贴附件 URL（可选）" />
+          </div>
+          <div class="web-form-actions"><span></span><button class="solid-button" type="submit" id="publishButton">发布</button></div>
         </form>
       </div>
     </div>
