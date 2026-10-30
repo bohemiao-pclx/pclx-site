@@ -61,6 +61,7 @@ function showToast(message) {
 function renderAuth() {
   $('authName').textContent = auth ? auth.user.username : ''
   $('authButton').textContent = auth ? '退出' : '登录 / 注册'
+  $('profileButton').hidden = !auth
 }
 function openModal(id) { $(id).hidden = false }
 function closeModal(id) { $(id).hidden = true }
@@ -91,7 +92,7 @@ async function loadPosts() {
           ${post.announcement ? '<span class="web-badge announcement">官方通告</span>' : ''}
           ${post.featured ? '<span class="web-badge featured">精华</span>' : ''}
           <span class="web-badge category">${escapeHtml(CATEGORY_LABEL[post.category] || post.category)}</span>
-          <span>${escapeHtml(post.author.username)}</span><span>${timeAgo(post.createdAt)}</span>
+          <button class="author-link" data-profile-id="${post.author.id}">${escapeHtml(post.author.username)}</button><span>${timeAgo(post.createdAt)}</span>
         </div>
         <h2>${escapeHtml(post.title)}</h2>
         <p>${escapeHtml(markdownToPlain(String(post.content || '')).slice(0, 190))}${markdownToPlain(String(post.content || '')).length > 190 ? '…' : ''}</p>
@@ -120,6 +121,7 @@ categoriesEl.addEventListener('click', (event) => {
 $('searchButton').addEventListener('click', () => { state.query = $('searchInput').value.trim(); void loadPosts() })
 $('searchInput').addEventListener('keydown', (event) => { if (event.key === 'Enter') { state.query = $('searchInput').value.trim(); void loadPosts() } })
 
+$('profileButton').addEventListener('click', () => { if (auth) void openProfile(auth.user.id) })
 $('authButton').addEventListener('click', () => {
   if (auth) { saveAuth(null); showToast('已退出论坛'); return }
   authMode = 'login'
@@ -155,6 +157,48 @@ function fileType(file) {
   return 'file'
 }
 
+async function uploadToHost(file) {
+  const form = new FormData()
+  form.append('file', file, file.name)
+  const response = await fetch('https://kappa.lol/api/upload', { method: 'POST', body: form })
+  const data = await response.json()
+  if (!response.ok || !data.link) throw new Error(data.message || '上传失败')
+  return data.link
+}
+
+async function uploadAvatar(file) {
+  if (!file || !auth) return
+  if (!file.type.startsWith('image/')) { showToast('头像必须是图片'); return }
+  if (file.size > 5 * 1024 * 1024) { showToast('头像不能超过 5 MB'); return }
+  try {
+    showToast('正在上传头像…')
+    const url = await uploadToHost(file)
+    const result = await api('/api/me/avatar', { method: 'PUT', token: auth.token, body: { avatarUrl: url } })
+    saveAuth({ ...auth, user: { ...auth.user, avatarUrl: result.user.avatarUrl || url } })
+    await openProfile(auth.user.id)
+    showToast('头像已更新')
+  } catch (error) { showToast('上传头像失败：' + error.message) }
+}
+
+async function openProfile(userId) {
+  try {
+    const result = await api(`/api/users/${userId}`, { token: auth?.token })
+    const own = auth?.user?.id === result.user.id
+    $('profileContent').innerHTML = `
+      <div class="web-profile">
+        <div class="web-profile-head">
+          <div class="web-profile-avatar">${result.user.avatarUrl ? `<img src="${escapeHtml(result.user.avatarUrl)}" alt="" />` : escapeHtml(result.user.username.slice(0, 1).toUpperCase())}</div>
+          <div><h2>${escapeHtml(result.user.username)}</h2><span>${result.user.role === 'admin' ? '管理员 · ' : ''}加入于 ${new Date(result.user.createdAt).toLocaleDateString('zh-CN')}</span></div>
+          ${own ? '<label class="solid-button web-avatar-button">上传头像<input id="avatarFile" type="file" accept="image/*" hidden /></label>' : ''}
+        </div>
+        <div class="web-profile-stats"><span><b>${result.user.postCount}</b> 帖子</span><span><b>${result.user.commentCount}</b> 评论</span><span><b>${result.user.likeCount}</b> 获赞</span></div>
+        <div class="web-profile-posts"><b>最近发布</b>${result.posts.length ? result.posts.map((post) => `<div class="web-profile-post"><span>${post.announcement ? '官方通告 · ' : ''}${post.featured ? '精华 · ' : ''}${escapeHtml(post.title)}</span><small>${timeAgo(post.createdAt)}</small></div>`).join('') : '<div class="web-empty">还没有发布过帖子。</div>'}</div>
+      </div>`
+    $('avatarFile')?.addEventListener('change', () => { void uploadAvatar($('avatarFile').files[0]) })
+    openModal('profileModal')
+  } catch (error) { showToast(error.message) }
+}
+
 async function uploadAttachment(file) {
   if (!file) return
   if (file.size > 100 * 1024 * 1024) {
@@ -166,13 +210,9 @@ async function uploadAttachment(file) {
   status.hidden = false
   status.className = 'file-status'
   status.innerHTML = '<span>正在上传 ' + escapeHtml(file.name) + ' …</span>'
-  const form = new FormData()
-  form.append('file', file, file.name)
   try {
-    const response = await fetch('https://kappa.lol/api/upload', { method: 'POST', body: form })
-    const data = await response.json()
-    if (!response.ok || !data.link) throw new Error(data.message || '上传失败')
-    pendingAttachment = { url: data.link, type: fileType(file), name: file.name }
+    const url = await uploadToHost(file)
+    pendingAttachment = { url, type: fileType(file), name: file.name }
     status.className = 'file-status'
     status.innerHTML = '<span>✓ ' + escapeHtml(file.name) + ' 已上传</span><button type="button" id="clearFile">×</button>'
     $('clearFile')?.addEventListener('click', () => {
@@ -230,6 +270,8 @@ $('newForm').addEventListener('submit', async (event) => {
 })
 
 listEl.addEventListener('click', (event) => {
+  const author = event.target.closest('.author-link')
+  if (author) { event.stopPropagation(); void openProfile(Number(author.dataset.profileId)); return }
   const post = event.target.closest('.web-post')
   if (post) void openDetail(Number(post.dataset.id))
 })
@@ -258,7 +300,7 @@ function renderDetail() {
       ${post.announcement ? '<span class="web-badge announcement">官方通告</span>' : ''}
       ${post.featured ? '<span class="web-badge featured">精华</span>' : ''}
       <span class="web-badge category">${escapeHtml(CATEGORY_LABEL[post.category] || post.category)}</span>
-      <span>${escapeHtml(post.author.username)}</span><span>${timeAgo(post.createdAt)}</span>
+      <button class="author-link" data-profile-id="${post.author.id}">${escapeHtml(post.author.username)}</button><span>${timeAgo(post.createdAt)}</span>
     </div>
     <h2 class="detail-title">${escapeHtml(post.title)}</h2>
     <div class="detail-content md-content">${renderMarkdown(post.content)}</div>
@@ -305,6 +347,11 @@ async function toggleFlag(flag) {
     showToast(flag === 'featured' ? '精华状态已更新' : '通告状态已更新')
   } catch (error) { showToast(error.message) }
 }
+
+document.getElementById('postDetail')?.addEventListener('click', (event) => {
+  const author = event.target.closest('.author-link')
+  if (author) void openProfile(Number(author.dataset.profileId))
+})
 
 renderAuth()
 void loadPosts()
