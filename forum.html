@@ -19,6 +19,7 @@
       <div class="forum-nav-actions">
         <a class="nav-github" href="index.html">返回官网</a>
         <span class="forum-auth-name" id="authName"></span>
+        <button class="mini-button" id="categoryAdminButton" type="button" hidden>板块</button>
         <button class="mini-button" id="profileButton" type="button" hidden>我的</button>
         <button class="mini-button" id="authButton" type="button">登录 / 注册</button>
         <button class="mini-button dark" id="newPostButton" type="button">发帖</button>
@@ -111,6 +112,19 @@
             <input id="newAttachment" placeholder="也可以直接粘贴附件 URL（可选）" />
           </div>
           <div class="web-form-actions"><span></span><button class="solid-button" type="submit" id="publishButton">发布</button></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="categoryModal" hidden>
+      <div class="web-modal">
+        <button class="modal-x" data-close="categoryModal">×</button>
+        <h2>新建板块</h2>
+        <p class="web-modal-sub">创建后网页论坛和启动器内论坛都会出现。</p>
+        <form id="categoryForm">
+          <label>板块名称<input id="categoryLabel" placeholder="例如：红石" maxlength="20" required /></label>
+          <label>英文标识<input id="categoryKey" placeholder="例如：redstone" maxlength="20" required /></label>
+          <div class="web-form-actions"><span></span><button class="solid-button" type="submit">创建</button></div>
         </form>
       </div>
     </div>
