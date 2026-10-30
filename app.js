@@ -76,3 +76,13 @@ for (const image of document.querySelectorAll('img[data-fallback]')) {
     image.src = image.dataset.fallback
   })
 }
+
+
+// 图床 URL 被网络拦截时，回退到 GitHub Pages 上的同图 URL。
+for (const image of document.querySelectorAll('img[data-fallback-url]')) {
+  image.addEventListener('error', () => {
+    if (image.dataset.fallbackUsed) return
+    image.dataset.fallbackUsed = '1'
+    image.src = image.dataset.fallbackUrl
+  })
+}
