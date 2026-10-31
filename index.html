@@ -24,6 +24,7 @@
         <a href="#features">功能</a>
         <a href="#shots">截图</a>
         <a href="#updates">更新</a>
+        <a href="activity.html">活动</a>
         <a href="#download">下载</a>
         <a class="nav-forum" href="forum.html">论坛 ↗</a>
       </nav>
@@ -216,25 +217,25 @@
             <h2>准备好，<br />进入<span class="serif">下一个世界</span>了吗？</h2>
             <p>Windows x64 便携版，不需要安装。下载后运行即可。</p>
             <div class="download-actions">
-              <a class="button download-button" href="https://pan.baidu.com/s/1PZF77iL-B_U48EMj6mv0Qw?pwd=a38a" target="_blank" rel="noreferrer">
-                百度网盘下载
+              <a class="button download-button" id="downloadLatest" href="https://pclx-forum.pages.dev/api/download/latest" rel="noreferrer">
+                下载最新版
                 <span class="arrow">↗</span>
               </a>
-              <button class="code-button" id="copyCode" data-code="a38a">
-                <span>提取码</span><b>a38a</b><em>复制</em>
-              </button>
+              <a class="code-button" href="https://github.com/bohemiao-pclx/pclx-updates/releases/latest" target="_blank" rel="noreferrer" style="text-decoration:none">
+                <span>来源</span><b>GitHub Release</b><em>查看</em>
+              </a>
             </div>
-            <p class="download-note">文件：PCL-X-1.0.0-portable.exe · 约 115 MB · 建议使用百度网盘客户端</p>
+            <p class="download-note" id="downloadNote">正在获取最新版本信息…</p>
           </div>
           <div class="download-panel reveal">
             <div class="download-panel-head"><span>PCL-X</span><em>1.0.0 / portable</em></div>
             <div class="download-file">
               <span class="file-icon">▣</span>
-              <div><b>PCL-X-1.0.0-portable.exe</b><small>Windows x64 · 120,418,467 bytes</small></div>
+              <div><b id="downloadFileName">PCL-X-portable.exe</b><small id="downloadFileMeta">Windows x64</small></div>
             </div>
             <div class="download-hash">
               <span>SHA-256</span>
-              <code>409f3e06d696e7c1de245b6025ae90f1cf17488762a4a0c028bc9136d68d2501</code>
+              <code id="downloadHash">正在获取…</code>
             </div>
             <div class="download-panel-foot">
               <span class="status-dot"></span>
@@ -279,6 +280,7 @@
         <a href="#features">功能</a>
         <a href="#shots">截图</a>
         <a href="#updates">更新</a>
+        <a href="activity.html">活动</a>
         <a href="forum.html">论坛</a>
         <a href="https://github.com/bohemiao-pclx/pclx-updates" target="_blank" rel="noreferrer">GitHub</a>
       </div>
