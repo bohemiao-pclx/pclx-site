@@ -187,3 +187,6 @@
 .web-post.highlight-green { border-color: rgba(34,197,94,.35); }
 .web-post.highlight-amber { border-color: rgba(245,158,11,.4); }
 .web-post.highlight-purple { border-color: rgba(168,85,247,.35); }
+
+.web-profile-avatar { position: relative; }
+.web-avatar-frame { position: absolute; inset: -8px; width: calc(100% + 16px); height: calc(100% + 16px); object-fit: contain; pointer-events: none; }
