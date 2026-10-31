@@ -81,6 +81,7 @@ function renderAuth() {
   $('authName').textContent = auth ? auth.user.username : ''
   $('authButton').textContent = auth ? '退出' : '登录 / 注册'
   $('profileButton').hidden = !auth
+  $('officialButton').hidden = !auth
   $('categoryAdminButton').hidden = !auth || auth.user.role !== 'admin'
 }
 function openModal(id) { $(id).hidden = false }
@@ -154,6 +155,15 @@ $('categoryForm').addEventListener('submit', async (event) => {
     await loadCategories()
   } catch (error) { showToast(error.message) }
 })
+$('officialButton').addEventListener('click', async () => {
+  if (!auth) return
+  try {
+    const result = await api('/api/official', { token: auth.token })
+    $('officialList').innerHTML = result.messages.length ? result.messages.map((item) => `<div class="official-item"><b>${escapeHtml(item.title)}</b><p>${escapeHtml(item.content)}</p><small>${timeAgo(item.createdAt)}</small></div>`).join('') : '<div class="web-empty">暂时没有官方消息。</div>'
+    for (const item of result.messages.filter((message) => !message.isRead)) await api('/api/official/read', { method: 'POST', token: auth.token, body: { id: item.id } })
+    openModal('officialModal')
+  } catch (error) { showToast(error.message) }
+})
 $('profileButton').addEventListener('click', () => { if (auth) void openProfile(auth.user.id) })
 $('authButton').addEventListener('click', () => {
   if (auth) { saveAuth(null); showToast('已退出论坛'); return }
@@ -224,8 +234,8 @@ async function openProfile(userId) {
         </div>
         <div class="web-profile-head">
           <div class="web-profile-avatar">${result.user.avatarUrl ? `<img src="${escapeHtml(result.user.avatarUrl)}" alt="" />` : escapeHtml(result.user.username.slice(0, 1).toUpperCase())}</div>
-          <div><h2>${escapeHtml(result.user.username)} ${result.user.title ? `<em class="web-title-badge">${escapeHtml(result.user.title)}</em>` : ''}</h2><span>${result.user.role === 'admin' ? '管理员 · ' : ''}加入于 ${new Date(result.user.createdAt).toLocaleDateString('zh-CN')}</span></div>
-          ${own ? '<button class="solid-button web-avatar-button" id="editProfileButton">编辑资料</button><label class="solid-button web-avatar-button">上传头像<input id="avatarFile" type="file" accept="image/*" hidden /></label>' : `<button class="solid-button web-avatar-button" id="followButton">${result.user.isFollowing ? '已关注' : '+ 关注'}</button>`}
+          <div><h2>${escapeHtml(result.user.username)} ${result.user.title ? `<em class="web-title-badge">${escapeHtml(result.user.title)}</em>` : ''}</h2><span>${result.user.role === 'admin' ? '管理员 · ' : ''}加入于 ${new Date(result.user.createdAt).toLocaleDateString('zh-CN')} · ID：${escapeHtml(result.user.accountId || `PCLX-${String(result.user.id).padStart(6, '0')}`)}</span></div>
+          ${own ? '<button class="solid-button web-avatar-button" id="checkinButton">签到</button><button class="solid-button web-avatar-button" id="editProfileButton">编辑资料</button><label class="solid-button web-avatar-button">上传头像<input id="avatarFile" type="file" accept="image/*" hidden /></label>' : `<button class="solid-button web-avatar-button" id="followButton">${result.user.isFollowing ? '已关注' : '+ 关注'}</button>`}
         </div>
         <p class="web-profile-bio">${escapeHtml(result.user.bio || '这个人很神秘，还没有写简介。')}</p>
         <div class="web-profile-meta"><span>${result.user.gender === 'male' ? '男' : result.user.gender === 'female' ? '女' : '保密'}</span>${result.user.age != null ? `<span>${result.user.age} 岁</span>` : ''}${result.user.ipLocation ? `<span>IP 属地：${escapeHtml(result.user.ipLocation)}</span>` : ''}</div>
@@ -236,6 +246,14 @@ async function openProfile(userId) {
     $('avatarFile')?.addEventListener('change', () => { void uploadAvatar($('avatarFile').files[0]) })
     $('coverFile')?.addEventListener('change', () => { void uploadProfileCover($('coverFile').files[0], result.user) })
     $('editProfileButton')?.addEventListener('click', () => openProfileEditor(result.user))
+    $('checkinButton')?.addEventListener('click', async () => {
+      if (!auth) return
+      try {
+        const checkin = await api('/api/checkin', { method: 'POST', token: auth.token })
+        showToast(`签到成功，获得 ${checkin.xpAdded} XP`)
+        await openProfile(result.user.id)
+      } catch (error) { showToast(error.message) }
+    })
     $('followButton')?.addEventListener('click', async () => {
       if (!auth) { openModal('authModal'); return }
       try {
