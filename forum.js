@@ -100,7 +100,9 @@ async function loadPosts() {
     if (state.tab === 'featured') params.set('featured', '1')
     if (state.tab === 'announcements') params.set('announcements', '1')
     if (state.tab === 'following') params.set('following', '1')
-    const result = await api(`/api/posts?${params}`)
+    let result
+    if (state.tab === 'favorites') result = await api('/api/favorites', { token: auth?.token })
+    else result = await api(`/api/posts?${params}`)
     state.posts = result.posts || []
     statusEl.hidden = state.posts.length > 0
     if (!state.posts.length) {
@@ -109,7 +111,7 @@ async function loadPosts() {
       return
     }
     listEl.innerHTML = state.posts.map((post) => `
-      <article class="web-post" data-id="${post.id}">
+      <article class="web-post ${post.highlight ? `highlight-${post.highlight}` : ""}" data-id="${post.id}">
         <div class="web-post-meta">
           ${post.announcement ? '<span class="web-badge announcement">官方通告</span>' : ''}
           ${post.pinned ? '<span class="web-badge pinned">置顶</span>' : ''}${post.pinned ? '<span class="web-badge pinned">置顶</span>' : ''}${post.featured ? '<span class="web-badge featured">精华</span>' : ''}
@@ -118,6 +120,7 @@ async function loadPosts() {
         </div>
         <h2>${escapeHtml(post.title)}</h2>
         <p>${escapeHtml(markdownToPlain(String(post.content || '')).slice(0, 190))}${markdownToPlain(String(post.content || '')).length > 190 ? '…' : ''}</p>
+        ${post.poll?.length ? `<div class="web-poll">${post.poll.map((option, index) => `<button type="button" data-vote="${post.id}:${index}">${escapeHtml(option)}</button>`).join('')}</div>` : ''}
         <div class="web-post-foot"><span>♥ ${post.likeCount}</span><span>💬 ${post.commentCount}</span><span class="open">查看讨论 →</span></div>
       </article>
     `).join('')
@@ -254,6 +257,11 @@ async function openProfile(userId) {
         await openProfile(result.user.id)
       } catch (error) { showToast(error.message) }
     })
+    $('blockButton')?.addEventListener('click', async () => {
+      if (!auth) { openModal('authModal'); return }
+      if (!confirm('屏蔽后看不到该用户的帖子，确定？')) return
+      try { await api(`/api/users/${result.user.id}/block`, { method: 'POST', token: auth.token }); showToast('已屏蔽该用户'); closeModal('profileModal') } catch (error) { showToast(error.message) }
+    })
     $('followButton')?.addEventListener('click', async () => {
       if (!auth) { openModal('authModal'); return }
       try {
@@ -327,7 +335,7 @@ $('newForm').addEventListener('submit', async (event) => {
   try {
     await api('/api/posts', {
       method: 'POST', token: auth.token,
-      body: { title: $('newTitle').value.trim(), content: $('newContent').value.trim(), category: $('newCategory').value, attachmentUrl, attachmentType, attachmentName }
+      body: { title: $('newTitle').value.trim(), content: $('newContent').value.trim(), category: $('newCategory').value, attachmentUrl, attachmentType, attachmentName, poll: $('newPoll').value.split('\n').map((x) => x.trim()).filter(Boolean), highlight: $('newHighlight').value }
     })
     closeModal('newModal')
     $('newForm').reset()
@@ -338,7 +346,10 @@ $('newForm').addEventListener('submit', async (event) => {
   } catch (error) { showToast(error.message) }
 })
 
-listEl.addEventListener('click', (event) => {
+listEl.addEventListener('click', async (event) => {
+  const voteBtn = event.target.closest('[data-vote]')
+  if (voteBtn && auth) { event.stopPropagation(); const [postId, idx] = voteBtn.dataset.vote.split(':'); try { await api(`/api/posts/${postId}/vote`, { method: 'POST', token: auth.token, body: { optionIndex: Number(idx) } }); showToast('投票成功'); void loadPosts() } catch (error) { showToast(error.message) } return }
+  if (voteBtn && !auth) { openModal('authModal'); return }
   const author = event.target.closest('.author-link')
   if (author) { event.stopPropagation(); void openProfile(Number(author.dataset.profileId)); return }
   const post = event.target.closest('.web-post')
