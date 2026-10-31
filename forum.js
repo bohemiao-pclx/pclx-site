@@ -224,11 +224,12 @@ async function openProfile(userId) {
         </div>
         <div class="web-profile-head">
           <div class="web-profile-avatar">${result.user.avatarUrl ? `<img src="${escapeHtml(result.user.avatarUrl)}" alt="" />` : escapeHtml(result.user.username.slice(0, 1).toUpperCase())}</div>
-          <div><h2>${escapeHtml(result.user.username)}</h2><span>${result.user.role === 'admin' ? '管理员 · ' : ''}加入于 ${new Date(result.user.createdAt).toLocaleDateString('zh-CN')}</span></div>
+          <div><h2>${escapeHtml(result.user.username)} ${result.user.title ? `<em class="web-title-badge">${escapeHtml(result.user.title)}</em>` : ''}</h2><span>${result.user.role === 'admin' ? '管理员 · ' : ''}加入于 ${new Date(result.user.createdAt).toLocaleDateString('zh-CN')}</span></div>
           ${own ? '<button class="solid-button web-avatar-button" id="editProfileButton">编辑资料</button><label class="solid-button web-avatar-button">上传头像<input id="avatarFile" type="file" accept="image/*" hidden /></label>' : `<button class="solid-button web-avatar-button" id="followButton">${result.user.isFollowing ? '已关注' : '+ 关注'}</button>`}
         </div>
         <p class="web-profile-bio">${escapeHtml(result.user.bio || '这个人很神秘，还没有写简介。')}</p>
         <div class="web-profile-meta"><span>${result.user.gender === 'male' ? '男' : result.user.gender === 'female' ? '女' : '保密'}</span>${result.user.age != null ? `<span>${result.user.age} 岁</span>` : ''}${result.user.ipLocation ? `<span>IP 属地：${escapeHtml(result.user.ipLocation)}</span>` : ''}</div>
+        <div class="web-level"><div><b>Lv.${result.user.level || 1}</b><span>${result.user.xp || 0} XP</span></div><div class="web-level-bar"><span style="width:${result.user.nextLevelXp ? Math.min(100, Math.max(0, ((result.user.xp || 0) - (result.user.currentLevelXp || 0)) / Math.max(1, result.user.nextLevelXp - (result.user.currentLevelXp || 0)) * 100)) : 100}%"></span></div><small>${result.user.nextLevelXp ? `距离下一级还需 ${Math.max(0, result.user.nextLevelXp - (result.user.xp || 0))} XP` : '已达到最高等级'}</small></div>
         <div class="web-profile-stats"><span><b>${result.user.postCount}</b> 帖子</span><span><b>${result.user.followerCount}</b> 粉丝</span><span><b>${result.user.followingCount}</b> 关注</span><span><b>${result.user.likeCount}</b> 获赞</span></div>
         <div class="web-profile-posts"><b>最近发布</b>${result.posts.length ? result.posts.map((post) => `<div class="web-profile-post"><span>${post.announcement ? '官方通告 · ' : ''}${post.featured ? '精华 · ' : ''}${escapeHtml(post.title)}</span><small>${timeAgo(post.createdAt)}</small></div>`).join('') : '<div class="web-empty">还没有发布过帖子。</div>'}</div>
       </div>`
@@ -384,6 +385,8 @@ function openProfileEditor(profile) {
   $('profileGender').value = profile.gender || 'secret'
   $('profileAge').value = profile.age ?? ''
   $('profileIp').value = profile.ipLocation || ''
+  $('profileTitle').innerHTML = (profile.unlockedTitles || ['新手']).map((title) => `<option value="${escapeHtml(title)}">${escapeHtml(title)}</option>`).join('')
+  $('profileTitle').value = profile.title || (profile.unlockedTitles || ['新手'])[0]
   $('profileEditForm').dataset.cover = profile.coverUrl || ''
   openModal('profileEditModal')
 }
@@ -394,7 +397,7 @@ $('profileEditForm').addEventListener('submit', async (event) => {
   try {
     const response = await api('/api/me/profile', { method: 'PUT', token: auth.token, body: {
       username: $('profileName').value.trim(), bio: $('profileBio').value.trim(), gender: $('profileGender').value,
-      age: $('profileAge').value, ipLocation: $('profileIp').value.trim(), coverUrl: $('profileEditForm').dataset.cover || ''
+      age: $('profileAge').value, ipLocation: $('profileIp').value.trim(), title: $('profileTitle').value, coverUrl: $('profileEditForm').dataset.cover || ''
     } })
     saveAuth({ ...auth, user: { ...auth.user, ...response.user } })
     closeModal('profileEditModal')
