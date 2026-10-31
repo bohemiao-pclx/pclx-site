@@ -158,3 +158,10 @@
 
 .forum-mention { color: var(--blue); font-weight: 650; }
 .web-profile-stats { grid-template-columns: repeat(4, 1fr); }
+
+.web-profile-cover { position: relative; height: 120px; margin: -25px -25px 0; border-radius: 18px 18px 0 0; background: linear-gradient(120deg, var(--paper-2), var(--white)); background-size: cover; background-position: center; }
+.web-cover-edit { position: absolute; right: 12px; bottom: 10px; padding: 6px 9px; border-radius: 7px; background: rgba(20,33,27,.62); color: #fff; font-size: 9px; cursor: pointer; }
+.web-profile-bio { margin: 0; color: var(--ink-soft); font-size: 11px; line-height: 1.65; }
+.web-profile-meta { display: flex; flex-wrap: wrap; gap: 7px; color: var(--muted); font-size: 9px; }
+.web-profile-meta span { padding: 3px 7px; border-radius: 999px; background: var(--paper-2); }
+.web-profile-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
