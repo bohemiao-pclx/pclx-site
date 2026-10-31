@@ -165,3 +165,11 @@
 .web-profile-meta { display: flex; flex-wrap: wrap; gap: 7px; color: var(--muted); font-size: 9px; }
 .web-profile-meta span { padding: 3px 7px; border-radius: 999px; background: var(--paper-2); }
 .web-profile-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+
+.web-title-badge { display: inline-block; margin-left: 4px; padding: 2px 6px; border-radius: 999px; background: rgba(191,233,74,.24); color: #587000; font-size: 8px; font-style: normal; vertical-align: middle; }
+.web-level { display: flex; flex-direction: column; gap: 5px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); }
+.web-level > div:first-child { display: flex; align-items: center; justify-content: space-between; color: var(--ink); font-size: 10px; }
+.web-level > div:first-child span { color: var(--muted); font-size: 8px; }
+.web-level-bar { height: 5px; overflow: hidden; border-radius: 999px; background: var(--paper-2); }
+.web-level-bar span { display: block; height: 100%; background: var(--blue); border-radius: inherit; }
+.web-level small { color: var(--muted); font-size: 8px; }
