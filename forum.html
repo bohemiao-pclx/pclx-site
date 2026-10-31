@@ -20,6 +20,7 @@
         <a class="nav-github" href="index.html">返回官网</a>
         <span class="forum-auth-name" id="authName"></span>
         <button class="mini-button" id="categoryAdminButton" type="button" hidden>板块</button>
+        <button class="mini-button" id="officialButton" type="button" hidden>官方消息</button>
         <button class="mini-button" id="profileButton" type="button" hidden>我的</button>
         <button class="mini-button" id="authButton" type="button">登录 / 注册</button>
         <button class="mini-button dark" id="newPostButton" type="button">发帖</button>
@@ -127,6 +128,14 @@
           <label>正文<textarea id="editContent" rows="8" required maxlength="20000"></textarea></label>
           <div class="web-form-actions"><span class="web-modal-sub">编辑后保留发布时间</span><button class="solid-button" type="submit">保存</button></div>
         </form>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="officialModal" hidden>
+      <div class="web-modal wide">
+        <button class="modal-x" data-close="officialModal">×</button>
+        <h2>官方消息</h2>
+        <div id="officialList" class="official-list"></div>
       </div>
     </div>
 
