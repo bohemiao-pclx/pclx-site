@@ -130,6 +130,23 @@
       </div>
     </div>
 
+    <div class="modal-backdrop" id="profileEditModal" hidden>
+      <div class="web-modal">
+        <button class="modal-x" data-close="profileEditModal">×</button>
+        <h2>编辑个人资料</h2>
+        <form id="profileEditForm">
+          <label>昵称<input id="profileName" required maxlength="20" /></label>
+          <label>简介<textarea id="profileBio" rows="3" maxlength="200"></textarea></label>
+          <div class="web-profile-form-row">
+            <label>性别<select id="profileGender"><option value="secret">保密</option><option value="male">男</option><option value="female">女</option></select></label>
+            <label>年龄<input id="profileAge" type="number" min="0" max="120" /></label>
+          </div>
+          <label>IP 属地<input id="profileIp" maxlength="60" placeholder="例如：中国 / 广东" /></label>
+          <div class="web-form-actions"><span></span><button class="solid-button" type="submit">保存</button></div>
+        </form>
+      </div>
+    </div>
+
     <div class="modal-backdrop" id="categoryModal" hidden>
       <div class="web-modal">
         <button class="modal-x" data-close="categoryModal">×</button>
