@@ -41,6 +41,7 @@
         <button type="button" data-tab="featured">精华</button>
         <button type="button" data-tab="announcements">官方通告</button>
         <button type="button" data-tab="following">关注</button>
+        <button type="button" data-tab="favorites">收藏</button>
       </nav>
 
       <div class="forum-web-toolbar">
@@ -102,6 +103,8 @@
               <option value="showcase">展示</option><option value="chat">闲聊</option>
             </select>
           </label>
+          <label>投票选项（可选，每行一个）<textarea id="newPoll" rows="2" maxlength="500" placeholder="2–6 个选项，每行一个"></textarea></label>
+          <label>帖子高亮<select id="newHighlight"><option value="">无</option><option value="blue">蓝色</option><option value="green">绿色</option><option value="amber">琥珀</option><option value="purple">紫色</option></select></label>
           <label>正文<textarea id="newContent" rows="7" required maxlength="20000" placeholder="写点什么…支持 Markdown：**加粗**、*斜体*、- 列表、`代码`、[链接](https://…)"></textarea></label>
           <div class="file-upload-field">
             <span>附件（可选）</span>
