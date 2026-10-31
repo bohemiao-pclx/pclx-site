@@ -173,3 +173,9 @@
 .web-level-bar { height: 5px; overflow: hidden; border-radius: 999px; background: var(--paper-2); }
 .web-level-bar span { display: block; height: 100%; background: var(--blue); border-radius: inherit; }
 .web-level small { color: var(--muted); font-size: 8px; }
+
+.official-list { display: flex; flex-direction: column; gap: 8px; max-height: 360px; overflow-y: auto; }
+.official-item { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+.official-item b { color: var(--ink); font-size: 11px; }
+.official-item p { margin: 4px 0; color: var(--ink-soft); font-size: 10px; line-height: 1.6; white-space: pre-wrap; }
+.official-item small { color: var(--muted); font-size: 8px; }
