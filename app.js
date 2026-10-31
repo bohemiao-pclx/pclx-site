@@ -99,11 +99,34 @@ fetch('https://pclx-forum.pages.dev/api/update', { cache: 'no-store' })
     const fileName = document.getElementById('downloadFileName')
     if (fileName && name) fileName.textContent = name
     const note = document.getElementById('downloadNote')
-    if (note) note.textContent = `最新版本：PCL-X ${data.version} · 约 ${Math.round((data.size || 0) / 1024 / 1024)} MB · 文件由 GitHub Release 提供`
+    if (note) note.textContent = `最新版本：PCL-X ${data.version} · 约 ${Math.round((data.size || 0) / 1024 / 1024)} MB · 使用加速下载`
     const meta = document.getElementById('downloadFileMeta')
     if (meta) meta.textContent = `Windows x64 · ${Number(data.size || 0).toLocaleString('en-US')} bytes`
     const hash = document.getElementById('downloadHash')
     if (hash && data.sha256) hash.textContent = data.sha256
+
+    // 每次更新后，官网所有版本号统一从更新清单同步
+    const version = String(data.version || '').replace(/^v/i, '')
+    if (version) {
+      const date = data.publishedAt ? new Date(data.publishedAt) : new Date()
+      const dateText = `${date.getUTCFullYear()}.${String(date.getUTCMonth() + 1).padStart(2, '0')}.${String(date.getUTCDate()).padStart(2, '0')}`
+      const setText = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value }
+      setText('siteVersionBrand', version)
+      setText('siteVersionDownloadNav', `下载 ${version}`)
+      setText('siteVersionDownloadHero', `下载 ${version}`)
+      setText('siteVersionPortable', `Portable ${version}`)
+      setText('siteVersionUpdateText', version)
+      setText('siteVersionRelease', version)
+      setText('siteReleaseDate', dateText)
+      setText('siteVersionReleaseTitle', `当前版本，${version}。`)
+      setText('siteVersionPanel', `${version} / portable`)
+      setText('siteVersionFaq', version)
+      document.title = `PCL-X ${version} — Minecraft，从这里开始`
+      const desc = document.getElementById('siteDescription')
+      if (desc) desc.setAttribute('content', `PCL-X ${version} — 为 Minecraft 打造的现代启动器。版本、存档、联机、AI、论坛与自动更新，一个应用全都有。`)
+      const link = document.getElementById('latestReleaseLink')
+      if (link) link.href = `https://github.com/bohemiao-pclx/pclx-updates/releases/tag/v${version}`
+    }
   })
   .catch(() => {
     const note = document.getElementById('downloadNote')
