@@ -86,3 +86,26 @@ for (const image of document.querySelectorAll('img[data-fallback-url]')) {
     image.src = image.dataset.fallbackUrl
   })
 }
+
+// 从更新清单读取最新版本，下载按钮直接指向 GitHub Release 资源
+fetch('https://pclx-forum.pages.dev/api/update', { cache: 'no-store' })
+  .then((response) => response.json())
+  .then((data) => {
+    if (!data || !data.version) return
+    const file = data.sourceUrl || data.url
+    const name = (() => { try { return decodeURIComponent(new URL(file).pathname.split('/').pop() || '') } catch { return '' } })()
+    const download = document.getElementById('downloadLatest')
+    if (download && file) download.href = file
+    const fileName = document.getElementById('downloadFileName')
+    if (fileName && name) fileName.textContent = name
+    const note = document.getElementById('downloadNote')
+    if (note) note.textContent = `最新版本：PCL-X ${data.version} · 约 ${Math.round((data.size || 0) / 1024 / 1024)} MB · 文件由 GitHub Release 提供`
+    const meta = document.getElementById('downloadFileMeta')
+    if (meta) meta.textContent = `Windows x64 · ${Number(data.size || 0).toLocaleString('en-US')} bytes`
+    const hash = document.getElementById('downloadHash')
+    if (hash && data.sha256) hash.textContent = data.sha256
+  })
+  .catch(() => {
+    const note = document.getElementById('downloadNote')
+    if (note) note.textContent = '获取版本信息失败，仍可点击下载最新版。'
+  })
