@@ -92,7 +92,7 @@ fetch('https://pclx-forum.pages.dev/api/update', { cache: 'no-store' })
   .then((response) => response.json())
   .then((data) => {
     if (!data || !data.version) return
-    const file = data.sourceUrl || data.url
+    const file = data.url || data.sourceUrl
     const name = (() => { try { return decodeURIComponent(new URL(file).pathname.split('/').pop() || '') } catch { return '' } })()
     const download = document.getElementById('downloadLatest')
     if (download && file) download.href = file
