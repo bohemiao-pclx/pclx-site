@@ -233,7 +233,7 @@ async function openProfile(userId) {
     const result = await api(`/api/users/${userId}`, { token: auth?.token })
     const own = auth?.user?.id === result.user.id
     $('profileContent').innerHTML = `
-      <div class="web-profile">
+      <div class="web-profile theme-${escapeHtml(result.user.profileTheme || "default")}">
         <div class="web-profile-cover" style="${result.user.coverUrl ? `background-image:url('${escapeHtml(result.user.coverUrl)}')` : ''}">
           ${own ? '<label class="web-cover-edit">更换背景<input id="coverFile" type="file" accept="image/*" hidden /></label>' : ''}
         </div>
@@ -636,7 +636,7 @@ function renderMessages() {
     const mine = message.author?.id === auth.user.id
     const roomInvite = message.kind === 'room' && message.roomCode
     const attachment = roomInvite ? '' : socialAttachment(message)
-    const content = message.content ? `<div class="social-bubble">${escapeHtml(message.content)}</div>` : ''
+    const content = message.content ? `<div class="social-bubble bubble-${escapeHtml(message.author?.chatBubble || "default")}">${escapeHtml(message.content)}</div>` : ''
     const invite = roomInvite ? `<div class="social-room-invite">
       <b>联机房间邀请</b>
       <span>${escapeHtml(message.content || '邀请你加入房间')}</span>
