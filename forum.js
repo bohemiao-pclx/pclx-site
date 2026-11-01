@@ -81,6 +81,7 @@ function renderAuth() {
   $('authName').textContent = auth ? auth.user.username : ''
   $('authButton').textContent = auth ? '退出' : '登录 / 注册'
   $('profileButton').hidden = !auth
+  $('teamButton').hidden = !auth
   $('socialButton').hidden = !auth
   $('officialButton').hidden = !auth
   $('categoryAdminButton').hidden = !auth || auth.user.role !== 'admin'
@@ -633,12 +634,19 @@ function renderMessages() {
   if (!box) return
   box.innerHTML = social.messages.length ? social.messages.map((message) => {
     const mine = message.author?.id === auth.user.id
-    const attachment = socialAttachment(message)
+    const roomInvite = message.kind === 'room' && message.roomCode
+    const attachment = roomInvite ? '' : socialAttachment(message)
     const content = message.content ? `<div class="social-bubble">${escapeHtml(message.content)}</div>` : ''
-    const room = message.kind === 'room' && message.roomCode ? `<div class="social-room">房间：${escapeHtml(message.roomCode)}</div>` : ''
+    const invite = roomInvite ? `<div class="social-room-invite">
+      <b>联机房间邀请</b>
+      <span>${escapeHtml(message.content || '邀请你加入房间')}</span>
+      <code>${escapeHtml(message.roomCode)}</code>
+      <div><button type="button" data-room-accept="${escapeHtml(message.roomCode)}">同意加入</button><button type="button" data-room-decline="${escapeHtml(message.roomCode)}">拒绝</button></div>
+    </div>` : ''
+    const room = !roomInvite && message.kind === 'room' && message.roomCode ? `<div class="social-room">房间：${escapeHtml(message.roomCode)}</div>` : ''
     return `<div class="social-message ${mine ? 'mine' : ''}">
       ${mine ? '' : `<span class="social-avatar tiny">${socialAvatar(message.author)}</span>`}
-      <div class="social-message-body">${content}${attachment}${room}<small>${escapeHtml(message.author?.username || '')} · ${timeAgo(message.createdAt)}</small></div>
+      <div class="social-message-body">${content}${attachment}${invite}${room}<small>${escapeHtml(message.author?.username || '')} · ${timeAgo(message.createdAt)}</small></div>
     </div>`
   }).join('') : '<div class="social-empty">暂无消息，打个招呼吧</div>'
   box.scrollTop = box.scrollHeight
@@ -719,9 +727,157 @@ $('chatFile')?.addEventListener('change', () => {
   if (file) showToast('已选择：' + file.name)
 })
 
-setInterval(() => {
-  if (auth && !$('socialModal').hidden) {
-    loadSocial().catch(() => undefined)
-    if (social.activeId) loadMessages(social.activeId).catch(() => undefined)
+
+/* ==================== 组队大厅 / 房间 ==================== */
+const teamState = { rooms: [], active: null, details: null }
+
+function teamAvatar(user) {
+  return `<span class="team-avatar">${user?.avatarUrl ? `<img src="${escapeHtml(user.avatarUrl)}" alt="" />` : escapeHtml(String(user?.username || '?').slice(0, 1).toUpperCase())}${user?.avatarFrame ? `<img class="team-avatar-frame" src="${escapeHtml(user.avatarFrame)}" alt="" />` : ''}</span>`
+}
+
+async function loadTeamLobby() {
+  if (!auth) { openModal('authModal'); return }
+  openModal('teamModal')
+  const list = $('teamRooms')
+  list.innerHTML = '<div class="web-empty">正在读取组队大厅…</div>'
+  try {
+    const result = await api('/api/team-lobby')
+    teamState.rooms = result.rooms || []
+    list.innerHTML = teamState.rooms.length ? teamState.rooms.map((room) => `
+      <article class="team-room-card">
+        <div class="team-room-card-head"><div>${teamAvatar(room.host)}<div><b>${escapeHtml(room.title)}</b><small>房主 ${escapeHtml(room.host.username)} · ${room.memberCount} 人</small></div></div><span class="team-live">组队中</span></div>
+        <div class="team-tags">${room.version ? `<span>${escapeHtml(room.version)}</span>` : ''}${room.loader ? `<span>${escapeHtml(room.loader)}</span>` : ''}</div>
+        <p class="team-resources">${room.resources.length ? room.resources.slice(0, 6).map((item) => escapeHtml(item)).join(' · ') : '没有登记资源'}</p>
+        <div class="team-room-card-actions"><button type="button" data-team-join="${escapeHtml(room.code)}">加入房间</button><button type="button" data-team-copy="${escapeHtml(room.code)}">复制房间码</button></div>
+      </article>`).join('') : '<div class="web-empty">暂时没有同步到组队大厅的房间。</div>'
+  } catch (error) { list.innerHTML = `<div class="web-empty">${escapeHtml(error.message)}</div>` }
+}
+
+async function joinTeamRoom(code) {
+  if (!auth) { openModal('authModal'); return }
+  try {
+    await api(`/api/rooms/${encodeURIComponent(code)}/join`, { method: 'POST', token: auth.token })
+    closeModal('teamModal')
+    await openTeamRoom(code)
+  } catch (error) { showToast(error.message) }
+}
+
+async function openTeamRoom(code) {
+  try {
+    const result = await api(`/api/rooms/${encodeURIComponent(code)}`, { token: auth.token })
+    teamState.active = result.room
+    teamState.details = result.room
+    openModal('teamRoomModal')
+    renderTeamRoom()
+  } catch (error) { showToast(error.message) }
+}
+
+function renderTeamRoom() {
+  const room = teamState.active
+  if (!room) return
+  $('teamRoomHead').innerHTML = `<p class="eyebrow"><span class="dot"></span> TEAM ROOM</p><div class="team-room-title"><h2>${escapeHtml(room.title)}</h2><code>${escapeHtml(room.code)}</code></div>`
+  $('teamMembers').innerHTML = room.members.map((member) => `<div class="team-member">${teamAvatar(member)}<div><b>${escapeHtml(member.username)}</b><small>${member.isHost ? '房主' : '成员'}</small></div>${room.isHost && !member.isHost ? `<span class="team-member-actions"><button type="button" data-team-transfer="${member.id}">转让</button><button type="button" data-team-kick="${member.id}">踢出</button></span>` : ''}</div>`).join('')
+  $('teamRoomInfo').innerHTML = `<div><span>版本</span><b>${escapeHtml(room.version || '未登记')}</b></div><div><span>加载器</span><b>${escapeHtml(room.loader || '未知')}</b></div><div><span>资源</span><b>${room.resources.length ? room.resources.map((item) => escapeHtml(item)).join(' / ') : '未登记'}</b></div>`
+  const actions = []
+  if (room.isHost) {
+    actions.push(`<label class="team-sync"><input type="checkbox" id="teamSync" ${room.synced ? 'checked' : ''}/> 同步到组队大厅</label>`)
+    actions.push(`<button type="button" id="teamInvite">邀请好友</button>`)
   }
-}, 5000)
+  actions.push(`<button type="button" id="teamDownload">下载同款实例</button>`)
+  actions.push(`<button type="button" id="teamLeave">${room.isHost ? '关闭房间' : '离开房间'}</button>`)
+  $('teamRoomActions').innerHTML = actions.join('')
+  $('teamChat').innerHTML = room.messages.length ? room.messages.map((message) => `<div class="team-chat-message"><b>${escapeHtml(message.author.username)}</b><span>${escapeHtml(message.content)}</span><small>${timeAgo(message.createdAt)}</small></div>`).join('') : '<div class="web-empty">还没有聊天消息。</div>'
+  $('teamChat').scrollTop = $('teamChat').scrollHeight
+}
+
+async function sendTeamChat(event) {
+  event.preventDefault()
+  const content = $('teamChatInput').value.trim()
+  if (!content || !teamState.active) return
+  try {
+    await api(`/api/rooms/${encodeURIComponent(teamState.active.code)}/messages`, { method: 'POST', token: auth.token, body: { content } })
+    $('teamChatInput').value = ''
+    await openTeamRoom(teamState.active.code)
+  } catch (error) { showToast(error.message) }
+}
+
+async function roomAction(action, userId) {
+  if (!teamState.active) return
+  const code = teamState.active.code
+  try {
+    await api(`/api/rooms/${encodeURIComponent(code)}/${action}`, { method: 'POST', token: auth.token, body: userId ? { userId } : {} })
+    showToast(action === 'kick' ? '已踢出成员' : '已转让房主')
+    await openTeamRoom(code)
+  } catch (error) { showToast(error.message) }
+}
+
+async function teamInviteFriend() {
+  const room = teamState.active
+  if (!room) return
+  try {
+    const result = await api('/api/friends', { token: auth.token })
+    const candidates = (result.friends || []).filter((friend) => !room.members.some((member) => member.id === friend.id))
+    if (!candidates.length) { showToast('没有可邀请的好友'); return }
+    const names = candidates.map((friend, index) => `${index + 1}. ${friend.username}`).join('\n')
+    const index = Number(window.prompt(`选择要邀请的好友：\\n${names}`)) - 1
+    const friend = candidates[index]
+    if (!friend) return
+    await api(`/api/rooms/${encodeURIComponent(room.code)}/invite`, { method: 'POST', token: auth.token, body: { userId: friend.id } })
+    showToast('邀请已发送到私聊')
+  } catch (error) { showToast(error.message) }
+}
+
+async function respondRoomInvite(code, accept) {
+  try {
+    const invites = (await api('/api/room-invites', { token: auth.token })).invites || []
+    const invite = invites.find((item) => item.code === code)
+    if (invite) await api(`/api/room-invites/${invite.id}/respond`, { method: 'POST', token: auth.token, body: { accept } })
+    if (accept) { closeModal('socialModal'); await joinTeamRoom(code) }
+    else { showToast('已拒绝邀请'); await loadMessages(social.activeId) }
+  } catch (error) { showToast(error.message) }
+}
+
+$('teamButton')?.addEventListener('click', () => { void loadTeamLobby() })
+$('teamRefresh')?.addEventListener('click', () => { void loadTeamLobby() })
+$('teamRooms')?.addEventListener('click', (event) => {
+  const join = event.target.closest('[data-team-join]')
+  const copy = event.target.closest('[data-team-copy]')
+  if (join) void joinTeamRoom(join.dataset.teamJoin)
+  if (copy) { navigator.clipboard?.writeText(copy.dataset.teamCopy); showToast('房间码已复制') }
+})
+$('teamChatForm')?.addEventListener('submit', (event) => { void sendTeamChat(event) })
+$('teamRoomActions')?.addEventListener('click', (event) => {
+  if (event.target.id === 'teamLeave') {
+    if (!teamState.active) return
+    void api(`/api/rooms/${encodeURIComponent(teamState.active.code)}${teamState.active.isHost ? '' : '/leave'}`, { method: teamState.active.isHost ? 'DELETE' : 'POST', token: auth.token }).then(() => { closeModal('teamRoomModal'); teamState.active = null; showToast('已退出房间') }).catch((error) => showToast(error.message))
+  }
+  if (event.target.id === 'teamInvite') void teamInviteFriend()
+  if (event.target.id === 'teamDownload') { navigator.clipboard?.writeText(`PCL-X 同款实例：${teamState.active?.version || ''} ${teamState.active?.loader || ''}`); showToast('实例信息已复制，请在启动器版本页安装对应版本') }
+})
+$('teamMembers')?.addEventListener('click', (event) => {
+  const kick = event.target.closest('[data-team-kick]')
+  const transfer = event.target.closest('[data-team-transfer]')
+  if (kick) void roomAction('kick', Number(kick.dataset.teamKick))
+  if (transfer) void roomAction('transfer', Number(transfer.dataset.teamTransfer))
+})
+$('teamRoomActions')?.addEventListener('change', async (event) => {
+  if (event.target.id === 'teamSync' && teamState.active) {
+    try { await api(`/api/rooms/${encodeURIComponent(teamState.active.code)}`, { method: 'PATCH', token: auth.token, body: { ...teamState.active, synced: event.target.checked } }); teamState.active.synced = event.target.checked; showToast(event.target.checked ? '已同步到组队大厅' : '已取消同步') } catch (error) { showToast(error.message) }
+  }
+})
+$('chatMessages')?.addEventListener('click', (event) => {
+  const accept = event.target.closest('[data-room-accept]')
+  const decline = event.target.closest('[data-room-decline]')
+  if (accept) void respondRoomInvite(accept.dataset.roomAccept, true)
+  if (decline) void respondRoomInvite(decline.dataset.roomDecline, false)
+})
+
+setInterval(() => {
+  if (auth && !$('teamRoomModal').hidden && teamState.active) openTeamRoom(teamState.active.code).catch(() => undefined)
+}, 2500)
+
+setInterval(() => {
+  if (!auth || $('socialModal').hidden) return
+  if (social.activeId) loadMessages(social.activeId).catch(() => undefined)
+  loadSocial().catch(() => undefined)
+}, 2000)
