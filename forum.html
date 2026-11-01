@@ -90,6 +90,10 @@
             <div id="chatHead" class="social-chat-head">选择好友开始聊天</div>
             <div id="chatMessages" class="social-messages"></div>
             <form id="chatForm" class="social-chat-form" hidden>
+              <label class="social-attach" title="发送图片、视频或文件">
+                <input id="chatFile" type="file" accept="image/*,video/*,*/*" hidden />
+                <span>📎</span>
+              </label>
               <input id="chatInput" placeholder="输入消息…" maxlength="5000" autocomplete="off" />
               <button type="submit">发送</button>
             </form>
