@@ -20,6 +20,7 @@
         <a class="nav-github" href="index.html">返回官网</a>
         <span class="forum-auth-name" id="authName"></span>
         <button class="mini-button" id="categoryAdminButton" type="button" hidden>板块</button>
+        <button class="mini-button" id="socialButton" type="button" hidden>好友与私聊</button>
         <button class="mini-button" id="officialButton" type="button" hidden>官方消息</button>
         <button class="mini-button" id="profileButton" type="button" hidden>我的</button>
         <button class="mini-button" id="authButton" type="button">登录 / 注册</button>
@@ -67,6 +68,35 @@
       <span>PCL-X Community</span>
       <span><a href="index.html">官网</a> · <a href="https://github.com/bohemiao-pclx/pclx-updates" target="_blank" rel="noreferrer">GitHub</a></span>
     </footer>
+
+    <div class="modal-backdrop" id="socialModal" hidden>
+      <div class="web-modal social-modal">
+        <button class="modal-x" data-close="socialModal">×</button>
+        <h2>好友与私聊</h2>
+        <div class="social-layout">
+          <aside class="social-side">
+            <form id="addFriendForm" class="social-add">
+              <input id="addFriendName" placeholder="用户名" maxlength="20" required />
+              <button type="submit">加好友</button>
+            </form>
+            <div class="social-section-title">好友请求</div>
+            <div id="friendRequests" class="social-list"></div>
+            <div class="social-section-title">好友</div>
+            <div id="friendsList" class="social-list"></div>
+            <div class="social-section-title">最近聊天</div>
+            <div id="conversationList" class="social-list"></div>
+          </aside>
+          <section class="social-chat">
+            <div id="chatHead" class="social-chat-head">选择好友开始聊天</div>
+            <div id="chatMessages" class="social-messages"></div>
+            <form id="chatForm" class="social-chat-form" hidden>
+              <input id="chatInput" placeholder="输入消息…" maxlength="5000" autocomplete="off" />
+              <button type="submit">发送</button>
+            </form>
+          </section>
+        </div>
+      </div>
+    </div>
 
     <div class="modal-backdrop" id="authModal" hidden>
       <div class="web-modal">
