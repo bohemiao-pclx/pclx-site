@@ -381,3 +381,9 @@ body.forum-body {
   .forum-web-tabs { width: 100%; border-radius: 12px; }
   .forum-web-toolbar { border-radius: 11px; }
 }
+
+.social-bubble.bubble-sakura { background: linear-gradient(135deg, rgba(255,192,220,.35), rgba(255,255,255,.8)); }
+.social-bubble.bubble-ocean { background: linear-gradient(135deg, rgba(56,189,248,.22), rgba(255,255,255,.8)); }
+
+.web-profile.theme-nebula .web-profile-cover { background: linear-gradient(120deg, #1b1440, #6d5dfc 55%, #c084fc); }
+.web-profile.theme-aurora .web-profile-cover { background: linear-gradient(120deg, #06202a, #06b6d4 55%, #67e8f9); }
