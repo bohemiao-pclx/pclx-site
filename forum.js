@@ -81,6 +81,7 @@ function renderAuth() {
   $('authName').textContent = auth ? auth.user.username : ''
   $('authButton').textContent = auth ? '退出' : '登录 / 注册'
   $('profileButton').hidden = !auth
+  $('socialButton').hidden = !auth
   $('officialButton').hidden = !auth
   $('categoryAdminButton').hidden = !auth || auth.user.role !== 'admin'
 }
@@ -238,7 +239,7 @@ async function openProfile(userId) {
         <div class="web-profile-head">
           <div class="web-profile-avatar">${result.user.avatarUrl ? `<img src="${escapeHtml(result.user.avatarUrl)}" alt="" />` : escapeHtml(result.user.username.slice(0, 1).toUpperCase())}${result.user.avatarFrame ? `<img class="web-avatar-frame" src="${escapeHtml(result.user.avatarFrame)}" alt="" />` : ""}</div>
           <div><h2>${escapeHtml(result.user.username)} ${result.user.title ? `<em class="web-title-badge">${escapeHtml(result.user.title)}</em>` : ''}</h2><span>${result.user.role === 'admin' ? '管理员 · ' : ''}加入于 ${new Date(result.user.createdAt).toLocaleDateString('zh-CN')} · ID：${escapeHtml(result.user.accountId || `PCLX-${String(result.user.id).padStart(6, '0')}`)}</span></div>
-          ${own ? '<button class="solid-button web-avatar-button" id="checkinButton">签到</button><button class="solid-button web-avatar-button" id="editProfileButton">编辑资料</button><label class="solid-button web-avatar-button">上传头像<input id="avatarFile" type="file" accept="image/*" hidden /></label>' : `<button class="solid-button web-avatar-button" id="followButton">${result.user.isFollowing ? '已关注' : '+ 关注'}</button>`}
+          ${own ? '<button class="solid-button web-avatar-button" id="checkinButton">签到</button><button class="solid-button web-avatar-button" id="editProfileButton">编辑资料</button><label class="solid-button web-avatar-button">上传头像<input id="avatarFile" type="file" accept="image/*" hidden /></label>' : `<button class="solid-button web-avatar-button" id="followButton">${result.user.isFollowing ? '已关注' : '+ 关注'}</button><button class="solid-button web-avatar-button" id="dmButton">私聊</button><button class="mini-button" id="friendButton">加好友</button>`}
         </div>
         <p class="web-profile-bio">${escapeHtml(result.user.bio || '这个人很神秘，还没有写简介。')}</p>
         <div class="web-profile-meta"><span>${result.user.gender === 'male' ? '男' : result.user.gender === 'female' ? '女' : '保密'}</span>${result.user.age != null ? `<span>${result.user.age} 岁</span>` : ''}${result.user.ipLocation ? `<span>IP 属地：${escapeHtml(result.user.ipLocation)}</span>` : ''}</div>
@@ -256,6 +257,15 @@ async function openProfile(userId) {
         showToast(`签到成功，获得 ${checkin.xpAdded} XP`)
         await openProfile(result.user.id)
       } catch (error) { showToast(error.message) }
+    })
+    $('dmButton')?.addEventListener('click', async () => {
+      if (!auth) { openModal('authModal'); return }
+      const targetId = result.user.id
+      try { const dm = await api('/api/conversations/dm', { method: 'POST', token: auth.token, body: { userId: targetId } }); closeModal('profileModal'); openSocial(dm.conversationId) } catch (error) { showToast(error.message) }
+    })
+    $('friendButton')?.addEventListener('click', async () => {
+      if (!auth) { openModal('authModal'); return }
+      try { await api('/api/friends/request', { method: 'POST', token: auth.token, body: { username: result.user.username } }); showToast('好友请求已发送') } catch (error) { showToast(error.message) }
     })
     $('blockButton')?.addEventListener('click', async () => {
       if (!auth) { openModal('authModal'); return }
@@ -508,3 +518,171 @@ document.getElementById('postDetail')?.addEventListener('click', (event) => {
 renderAuth()
 void loadCategories()
 void loadPosts()
+
+/* ==================== 好友与私聊 ==================== */
+const social = {
+  friends: [],
+  requests: [],
+  conversations: [],
+  activeId: null,
+  messages: []
+}
+
+function socialAvatar(user) {
+  const initial = escapeHtml(String(user?.username || '?').slice(0, 1).toUpperCase())
+  return user?.avatarUrl ? `<img src="${escapeHtml(user.avatarUrl)}" alt="" />` : `<span>${initial}</span>`
+}
+
+function socialName(user) {
+  return escapeHtml(user?.username || '未知用户')
+}
+
+async function loadSocial(preserveActive = true) {
+  if (!auth) return
+  const [friendData, conversationData] = await Promise.all([
+    api('/api/friends', { token: auth.token }),
+    api('/api/conversations', { token: auth.token })
+  ])
+  social.friends = friendData.friends || []
+  social.requests = friendData.incoming || []
+  social.conversations = conversationData.conversations || []
+  if (!preserveActive) social.activeId = null
+  if (social.activeId && !social.conversations.some((item) => item.id === social.activeId)) social.activeId = null
+  renderSocial()
+  if (social.activeId) await loadMessages(social.activeId)
+}
+
+function renderSocial() {
+  const friendList = $('friendsList')
+  const requestList = $('friendRequests')
+  const conversationList = $('conversationList')
+  if (!friendList) return
+  requestList.innerHTML = social.requests.length ? social.requests.map((user) => `
+    <div class="social-request">
+      <div class="social-person-main"><span class="social-avatar">${socialAvatar(user)}</span><b>${socialName(user)}</b></div>
+      <div class="social-request-actions">
+        <button type="button" data-request="${user.requestId}" data-accept="1">接受</button>
+        <button type="button" data-request="${user.requestId}" data-accept="0">拒绝</button>
+      </div>
+    </div>`).join('') : '<div class="social-empty">没有新的好友请求</div>'
+  friendList.innerHTML = social.friends.length ? social.friends.map((user) => `
+    <button type="button" class="social-person" data-friend="${user.id}">
+      <span class="social-avatar">${socialAvatar(user)}</span>
+      <span class="social-person-main"><b>${socialName(user)}</b><small>${escapeHtml(user.role === 'admin' ? '管理员' : '好友')}</small></span>
+    </button>`).join('') : '<div class="social-empty">还没有好友，先在上方搜索用户名添加</div>'
+  conversationList.innerHTML = social.conversations.length ? social.conversations.map((conversation) => {
+    const other = conversation.members.find((member) => member.id !== auth.user.id) || conversation.members[0] || {}
+    const name = conversation.type === 'group' ? (conversation.name || '群聊') : other.username || '私聊'
+    return `<button type="button" class="social-person ${social.activeId === conversation.id ? 'active' : ''}" data-conversation="${conversation.id}">
+      <span class="social-avatar">${conversation.type === 'group' ? '群' : socialAvatar(other)}</span>
+      <span class="social-person-main"><b>${escapeHtml(name)}</b><small>${escapeHtml(String(conversation.lastMessage || '还没有消息').slice(0, 30))}</small></span>
+    </button>`
+  }).join('') : '<div class="social-empty">还没有聊天</div>'
+}
+
+async function openSocial(conversationId = null) {
+  if (!auth) { openModal('authModal'); return }
+  openModal('socialModal')
+  try {
+    await loadSocial(false)
+    if (conversationId) await selectConversation(Number(conversationId))
+    else if (social.conversations.length) await selectConversation(social.conversations[0].id)
+  } catch (error) { showToast(error.message) }
+}
+
+async function selectConversation(conversationId) {
+  social.activeId = conversationId
+  const conversation = social.conversations.find((item) => item.id === conversationId)
+  const head = $('chatHead')
+  if (head) {
+    if (!conversation) head.textContent = '选择好友开始聊天'
+    else if (conversation.type === 'group') head.textContent = conversation.name || '群聊'
+    else {
+      const other = conversation.members.find((member) => member.id !== auth.user.id) || {}
+      head.innerHTML = `<span class="social-avatar small">${socialAvatar(other)}</span><b>${socialName(other)}</b>`
+    }
+  }
+  $('chatForm').hidden = false
+  renderSocial()
+  await loadMessages(conversationId)
+}
+
+async function loadMessages(conversationId) {
+  try {
+    const result = await api(`/api/conversations/${conversationId}/messages`, { token: auth.token })
+    social.messages = result.messages || []
+    renderMessages()
+  } catch (error) { showToast(error.message) }
+}
+
+function renderMessages() {
+  const box = $('chatMessages')
+  if (!box) return
+  box.innerHTML = social.messages.length ? social.messages.map((message) => {
+    const mine = message.author?.id === auth.user.id
+    return `<div class="social-message ${mine ? 'mine' : ''}">
+      ${mine ? '' : `<span class="social-avatar tiny">${socialAvatar(message.author)}</span>`}
+      <div><div class="social-bubble">${escapeHtml(message.content || '')}</div><small>${escapeHtml(message.author?.username || '')} · ${timeAgo(message.createdAt)}</small></div>
+    </div>`
+  }).join('') : '<div class="social-empty">暂无消息，打个招呼吧</div>'
+  box.scrollTop = box.scrollHeight
+}
+
+async function sendSocialMessage(event) {
+  event.preventDefault()
+  const input = $('chatInput')
+  const content = input.value.trim()
+  if (!content || !social.activeId || !auth) return
+  input.value = ''
+  try {
+    await api(`/api/conversations/${social.activeId}/messages`, { method: 'POST', token: auth.token, body: { content } })
+    await loadMessages(social.activeId)
+    await loadSocial()
+  } catch (error) { showToast(error.message) }
+}
+
+async function startDirectMessage(userId) {
+  if (!auth) { openModal('authModal'); return }
+  try {
+    const result = await api('/api/conversations/dm', { method: 'POST', token: auth.token, body: { userId } })
+    openSocial(result.conversationId)
+  } catch (error) { showToast(error.message) }
+}
+
+$('socialButton')?.addEventListener('click', () => { void openSocial() })
+$('addFriendForm')?.addEventListener('submit', async (event) => {
+  event.preventDefault()
+  const username = $('addFriendName').value.trim()
+  if (!username || !auth) return
+  try {
+    const result = await api('/api/friends/request', { method: 'POST', token: auth.token, body: { username } })
+    $('addFriendName').value = ''
+    showToast(result.accepted ? '你们已经成为好友' : '好友请求已发送')
+    await loadSocial()
+  } catch (error) { showToast(error.message) }
+})
+$('friendRequests')?.addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-request]')
+  if (!button || !auth) return
+  try {
+    await api('/api/friends/respond', { method: 'POST', token: auth.token, body: { id: Number(button.dataset.request), accept: button.dataset.accept === '1' } })
+    showToast(button.dataset.accept === '1' ? '已接受好友请求' : '已拒绝')
+    await loadSocial()
+  } catch (error) { showToast(error.message) }
+})
+$('friendsList')?.addEventListener('click', (event) => {
+  const item = event.target.closest('[data-friend]')
+  if (item) void startDirectMessage(Number(item.dataset.friend))
+})
+$('conversationList')?.addEventListener('click', (event) => {
+  const item = event.target.closest('[data-conversation]')
+  if (item) void selectConversation(Number(item.dataset.conversation))
+})
+$('chatForm')?.addEventListener('submit', (event) => { void sendSocialMessage(event) })
+
+setInterval(() => {
+  if (auth && !$('socialModal').hidden) {
+    loadSocial().catch(() => undefined)
+    if (social.activeId) loadMessages(social.activeId).catch(() => undefined)
+  }
+}, 5000)
