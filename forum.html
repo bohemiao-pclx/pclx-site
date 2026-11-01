@@ -20,6 +20,7 @@
         <a class="nav-github" href="index.html">返回官网</a>
         <span class="forum-auth-name" id="authName"></span>
         <button class="mini-button" id="categoryAdminButton" type="button" hidden>板块</button>
+        <button class="mini-button" id="teamButton" type="button" hidden>组队大厅</button>
         <button class="mini-button" id="socialButton" type="button" hidden>好友与私聊</button>
         <button class="mini-button" id="officialButton" type="button" hidden>官方消息</button>
         <button class="mini-button" id="profileButton" type="button" hidden>我的</button>
@@ -68,6 +69,38 @@
       <span>PCL-X Community</span>
       <span><a href="index.html">官网</a> · <a href="https://github.com/bohemiao-pclx/pclx-updates" target="_blank" rel="noreferrer">GitHub</a></span>
     </footer>
+
+    <div class="modal-backdrop" id="teamModal" hidden>
+      <div class="web-modal wide team-modal">
+        <button class="modal-x" data-close="teamModal">×</button>
+        <div class="team-modal-head">
+          <div><p class="eyebrow"><span class="dot"></span> TEAM LOBBY</p><h2>组队大厅</h2></div>
+          <button class="mini-button" id="teamRefresh" type="button">刷新</button>
+        </div>
+        <div id="teamRooms" class="team-room-list"></div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="teamRoomModal" hidden>
+      <div class="web-modal wide team-room-modal">
+        <button class="modal-x" data-close="teamRoomModal">×</button>
+        <div id="teamRoomHead" class="team-room-head"></div>
+        <div class="team-room-layout">
+          <section class="team-room-main">
+            <div id="teamMembers" class="team-members"></div>
+            <div id="teamChat" class="team-chat"></div>
+            <form id="teamChatForm" class="team-chat-form">
+              <input id="teamChatInput" placeholder="房间内消息…" maxlength="2000" autocomplete="off" />
+              <button type="submit">发送</button>
+            </form>
+          </section>
+          <aside class="team-room-side">
+            <div class="team-room-info" id="teamRoomInfo"></div>
+            <div class="team-room-actions" id="teamRoomActions"></div>
+          </aside>
+        </div>
+      </div>
+    </div>
 
     <div class="modal-backdrop" id="socialModal" hidden>
       <div class="web-modal social-modal">
