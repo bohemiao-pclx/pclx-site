@@ -747,7 +747,7 @@ async function loadTeamLobby() {
       <article class="team-room-card">
         <div class="team-room-card-head"><div>${teamAvatar(room.host)}<div><b>${escapeHtml(room.title)}</b><small>房主 ${escapeHtml(room.host.username)} · ${room.memberCount} 人</small></div></div><span class="team-live">组队中</span></div>
         <div class="team-tags">${room.version ? `<span>${escapeHtml(room.version)}</span>` : ''}${room.loader ? `<span>${escapeHtml(room.loader)}</span>` : ''}</div>
-        <p class="team-resources">${room.resources.length ? room.resources.slice(0, 6).map((item) => escapeHtml(item)).join(' · ') : '没有登记资源'}</p>
+        <p class="team-resources">${room.resources.length ? room.resources.slice(0, 6).map((item) => escapeHtml(String(item).split('::')[2] || item)).join(' · ') : '没有登记资源'}</p>
         <div class="team-room-card-actions"><button type="button" data-team-join="${escapeHtml(room.code)}">加入房间</button><button type="button" data-team-copy="${escapeHtml(room.code)}">复制房间码</button></div>
       </article>`).join('') : '<div class="web-empty">暂时没有同步到组队大厅的房间。</div>'
   } catch (error) { list.innerHTML = `<div class="web-empty">${escapeHtml(error.message)}</div>` }
@@ -777,7 +777,7 @@ function renderTeamRoom() {
   if (!room) return
   $('teamRoomHead').innerHTML = `<p class="eyebrow"><span class="dot"></span> TEAM ROOM</p><div class="team-room-title"><h2>${escapeHtml(room.title)}</h2><code>${escapeHtml(room.code)}</code></div>`
   $('teamMembers').innerHTML = room.members.map((member) => `<div class="team-member">${teamAvatar(member)}<div><b>${escapeHtml(member.username)}</b><small>${member.isHost ? '房主' : '成员'}</small></div>${room.isHost && !member.isHost ? `<span class="team-member-actions"><button type="button" data-team-transfer="${member.id}">转让</button><button type="button" data-team-kick="${member.id}">踢出</button></span>` : ''}</div>`).join('')
-  $('teamRoomInfo').innerHTML = `<div><span>版本</span><b>${escapeHtml(room.version || '未登记')}</b></div><div><span>加载器</span><b>${escapeHtml(room.loader || '未知')}</b></div><div><span>资源</span><b>${room.resources.length ? room.resources.map((item) => escapeHtml(item)).join(' / ') : '未登记'}</b></div>`
+  $('teamRoomInfo').innerHTML = `<div><span>版本</span><b>${escapeHtml(room.version || '未登记')}</b></div><div><span>加载器</span><b>${escapeHtml(room.loader || '未知')}</b></div><div><span>资源</span><b>${room.resources.length ? room.resources.map((item) => escapeHtml(String(item).split('::')[2] || item)).join(' / ') : '未登记'}</b></div>`
   const actions = []
   if (room.isHost) {
     actions.push(`<label class="team-sync"><input type="checkbox" id="teamSync" ${room.synced ? 'checked' : ''}/> 同步到组队大厅</label>`)
