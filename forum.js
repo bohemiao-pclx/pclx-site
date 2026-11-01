@@ -615,14 +615,30 @@ async function loadMessages(conversationId) {
   } catch (error) { showToast(error.message) }
 }
 
+function socialAttachment(message) {
+  if (!message.attachmentUrl) return ''
+  const url = escapeHtml(message.attachmentUrl)
+  const name = escapeHtml(message.attachmentName || '附件')
+  if (message.attachmentType === 'image') {
+    return `<a href="${url}" target="_blank" rel="noreferrer"><img class="social-media social-media-image" src="${url}" alt="${name}" loading="lazy" /></a>`
+  }
+  if (message.attachmentType === 'video') {
+    return `<video class="social-media social-media-video" src="${url}" controls preload="metadata"></video>`
+  }
+  return `<a class="social-file" href="${url}" target="_blank" rel="noreferrer">📎 ${name}</a>`
+}
+
 function renderMessages() {
   const box = $('chatMessages')
   if (!box) return
   box.innerHTML = social.messages.length ? social.messages.map((message) => {
     const mine = message.author?.id === auth.user.id
+    const attachment = socialAttachment(message)
+    const content = message.content ? `<div class="social-bubble">${escapeHtml(message.content)}</div>` : ''
+    const room = message.kind === 'room' && message.roomCode ? `<div class="social-room">房间：${escapeHtml(message.roomCode)}</div>` : ''
     return `<div class="social-message ${mine ? 'mine' : ''}">
       ${mine ? '' : `<span class="social-avatar tiny">${socialAvatar(message.author)}</span>`}
-      <div><div class="social-bubble">${escapeHtml(message.content || '')}</div><small>${escapeHtml(message.author?.username || '')} · ${timeAgo(message.createdAt)}</small></div>
+      <div class="social-message-body">${content}${attachment}${room}<small>${escapeHtml(message.author?.username || '')} · ${timeAgo(message.createdAt)}</small></div>
     </div>`
   }).join('') : '<div class="social-empty">暂无消息，打个招呼吧</div>'
   box.scrollTop = box.scrollHeight
@@ -631,14 +647,33 @@ function renderMessages() {
 async function sendSocialMessage(event) {
   event.preventDefault()
   const input = $('chatInput')
+  const fileInput = $('chatFile')
+  const file = fileInput?.files?.[0] || null
   const content = input.value.trim()
-  if (!content || !social.activeId || !auth) return
-  input.value = ''
+  if ((!content && !file) || !social.activeId || !auth) return
+  const submit = event.target.querySelector('button[type="submit"]')
+  if (submit) submit.disabled = true
   try {
-    await api(`/api/conversations/${social.activeId}/messages`, { method: 'POST', token: auth.token, body: { content } })
+    let attachmentUrl = null
+    let attachmentType = null
+    let attachmentName = null
+    if (file) {
+      if (file.size > 100 * 1024 * 1024) throw new Error('文件超过 100 MB')
+      attachmentUrl = await uploadToHost(file)
+      attachmentType = fileType(file)
+      attachmentName = file.name
+    }
+    await api(`/api/conversations/${social.activeId}/messages`, {
+      method: 'POST', token: auth.token,
+      body: { content, attachmentUrl, attachmentType, attachmentName }
+    })
+    input.value = ''
+    if (fileInput) fileInput.value = ''
     await loadMessages(social.activeId)
     await loadSocial()
-  } catch (error) { showToast(error.message) }
+  } catch (error) { showToast(error.message) } finally {
+    if (submit) submit.disabled = false
+  }
 }
 
 async function startDirectMessage(userId) {
@@ -679,6 +714,10 @@ $('conversationList')?.addEventListener('click', (event) => {
   if (item) void selectConversation(Number(item.dataset.conversation))
 })
 $('chatForm')?.addEventListener('submit', (event) => { void sendSocialMessage(event) })
+$('chatFile')?.addEventListener('change', () => {
+  const file = $('chatFile').files?.[0]
+  if (file) showToast('已选择：' + file.name)
+})
 
 setInterval(() => {
   if (auth && !$('socialModal').hidden) {
